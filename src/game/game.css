@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   display: grid;
-  grid-template-rows: 3.4rem 1fr auto;
+  grid-template-rows: 5.2rem 1fr auto;
   background: #2a2a2a;
   font-family: Arial, sans-serif;
 }
@@ -165,6 +165,10 @@
 }
 
 @media (max-width: 640px) {
+  #game {
+    grid-template-rows: 8.4rem 1fr auto;
+  }
+
   .table {
     padding: 3rem 0.6rem 3.2rem;
   }
