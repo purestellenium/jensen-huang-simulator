@@ -27,17 +27,19 @@ export function outlineButtonArt(label: string, width: number, height: number, o
   ctx.fillRect(inset, inset, width - inset * 2, height - inset * 2);
   rc.rectangle(inset, inset, width - inset * 2, height - inset * 2, {
     seed,
-    roughness: 2,
-    bowing: 3,
+    roughness: 1.8,
+    bowing: 2.5,
+    disableMultiStroke: true,
+    preserveVertices: true,
     stroke: options.disabled ? "#555" : "#fff",
-    strokeWidth: 3,
+    strokeWidth: 4,
   });
 
   const centerY = height / 2;
   if (options.glyph) {
     const size = fontSize * 0.55;
     const x = fontSize * 1.2;
-    const ink = { seed, roughness: 1.5, stroke: textColor, strokeWidth: 5 };
+    const ink = { seed, roughness: 1.5, disableMultiStroke: true, stroke: textColor, strokeWidth: 5 };
     if (options.glyph === "no") {
       rc.line(x - size, centerY - size, x + size, centerY + size, ink);
       rc.line(x - size, centerY + size, x + size, centerY - size, ink);

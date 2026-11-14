@@ -24,8 +24,7 @@ export const STRINGS = {
     stats: {
       money: "Money",
       affairs: "Affairs",
-      feds: "Feds",
-      wife: "Wife",
+      feds: "Wanted",
       board: "Board",
     },
   },
@@ -33,6 +32,7 @@ export const STRINGS = {
   amounts: {
     money: (value: number) => `$${trimmed(value)}M`,
     affairs: (count: number) => `${trimmed(count)} AFFAIR${count === 1 ? "" : "S"}`,
+    stars: (count: number) => `${count} star${count === 1 ? "" : "s"}`,
     gain: (text: string) => `+${text}`,
     loss: (text: string) => `-${text}`,
   },
@@ -48,13 +48,13 @@ export const STRINGS = {
       headline: "NVIDIA CEO ARRESTED IN LEATHER JACKET",
       story: "Federal agents say the paper trail was \"longer than a GPU backorder.\"",
     },
-    wife: {
-      headline: "NVIDIA CEO'S WIFE FINDS OUT",
-      story: "Sources confirm the divorce lawyer is already using his own GPUs to run the numbers.",
-    },
     board: {
       headline: "NVIDIA BOARD FIRES CEO",
       story: "\"We just stopped believing the more you buy, the more you save,\" said one director.",
+    },
+    scandal: {
+      headline: "NVIDIA BOARD OUSTS CEO OVER AFFAIR",
+      story: "\"We tolerate a lot of things,\" said one director. \"A leaked group chat is not one of them.\"",
     },
     bounceBack: "How will Jensen Huang bounce back from this?",
   },
@@ -69,17 +69,6 @@ export const STRINGS = {
       accept: {
         label: "Yes my sexy spy",
         result: "It's a match. Her bio just says \"love long walks near data centers.\"",
-      },
-    },
-    datingKyle: {
-      text: "Kyle, 34, wants to match! His bio: \"Looking for someone who understands CUDA.\"",
-      left: {
-        label: "Swipe left",
-        result: "Kyle will survive.",
-      },
-      right: {
-        label: "Swipe right",
-        result: "Kyle explains CUDA for ninety minutes. You already knew all of it.",
       },
     },
     datingBarista: {
@@ -112,7 +101,8 @@ export const STRINGS = {
       text: "Lori_Official wants to match! Her bio: \"Married to a guy who's always 'in a meeting.'\"",
       unmatch: {
         label: "Unmatch, fast",
-        result: "The app tells her you unmatched. Everyone saw.",
+        safe: "You got out before she looked.",
+        caught: "The app tells her you unmatched. She screenshots it. The board gets the screenshot.",
       },
       matchWife: {
         label: "Match with your own wife",
@@ -193,7 +183,7 @@ export const STRINGS = {
       supplier: {
         label: "It's a supplier",
         believed: "She wants to believe you. She does, for now.",
-        calls: "She calls the number. A supplier of what, exactly?",
+        calls: "She calls the number. A supplier of what, exactly? By Monday the board has the transcript.",
       },
       gift: {
         label: "Buy her a very rare GPU",
@@ -201,7 +191,25 @@ export const STRINGS = {
       },
       heart: {
         label: "Send a heart emoji",
-        result: "It buys you an evening.",
+        safe: "It buys you an evening.",
+        caught: "She sees the heart emoji and the dating app notification in the same preview.",
+      },
+    },
+    signalTabloid: {
+      text: "A tabloid reporter: we have photos of you and a barista. Comment?",
+      noComment: {
+        label: "No comment",
+        quiet: "They sit on the story. For now.",
+        published: "\"No comment\" is a comment. It runs on the front page.",
+      },
+      payUp: {
+        label: "Pay them to kill it",
+        result: "The story dies. Your wallet takes the hit.",
+      },
+      deny: {
+        label: "Deny everything",
+        believed: "They fold. Their photos were blurry.",
+        caught: "They had a second set of photos.",
       },
     },
     signalLawyer: {

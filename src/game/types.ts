@@ -1,6 +1,9 @@
-export const STAT_KEYS = ["money", "affairs", "feds", "wife", "board"] as const;
+export const STAT_KEYS = ["money", "affairs", "feds", "board"] as const;
 export type StatKey = (typeof STAT_KEYS)[number];
 export type Stats = Record<StatKey, number>;
+
+export const MAX_STARS = 5;
+export const FEDS_PER_STAR = 20;
 
 export type NumericKey = StatKey | "turn";
 
@@ -18,6 +21,7 @@ export interface Outcome {
   result: string;
   effects?: Effect;
   next?: string;
+  loss?: LossKind;
   weight?: number;
 }
 
@@ -44,7 +48,7 @@ export interface Scenario {
   choices: Choice[];
 }
 
-export type LossKind = "feds" | "wife" | "board";
+export type LossKind = "feds" | "board" | "scandal";
 
 export interface GameState {
   turn: number;

@@ -9,9 +9,9 @@ export interface Contact {
 
 export const CONTACTS: Record<string, Contact> = {
   spy: { emoji: "🕶️", color: "#a633d6" },
-  kyle: { emoji: "🧔", color: "#ff8c37" },
   barista: { emoji: "☕", color: "#a633d6" },
   lori: { emoji: "👩", color: "#ec3750" },
+  tabloid: { emoji: "📰", color: "#f1c40f" },
   ling: { emoji: "📦", color: "#338eda" },
   wei: { emoji: "🎮", color: "#33d6a6" },
   fbi: { emoji: "🕵️", color: "#8492a6" },
@@ -21,8 +21,8 @@ export const CONTACTS: Record<string, Contact> = {
 
 export const ENDINGS: Record<LossKind, { headline: string; story: string }> = {
   feds: STRINGS.endings.feds,
-  wife: STRINGS.endings.wife,
   board: STRINGS.endings.board,
+  scandal: STRINGS.endings.scandal,
 };
 
 const S = STRINGS.scenarios;
@@ -39,33 +39,12 @@ export const SCENARIOS: Scenario[] = [
         label: S.datingSpy.decline.label,
         tone: "no",
         result: S.datingSpy.decline.result,
-        effects: { stats: { wife: -3 } },
       },
       {
         label: S.datingSpy.accept.label,
         tone: "yes",
         result: S.datingSpy.accept.result,
-        effects: { stats: { affairs: 1, wife: 10, feds: 8 } },
-      },
-    ],
-  },
-  {
-    id: "dating-kyle",
-    app: "dating",
-    contact: "kyle",
-    text: S.datingKyle.text,
-    weight: 2,
-    choices: [
-      {
-        label: S.datingKyle.left.label,
-        tone: "no",
-        result: S.datingKyle.left.result,
-      },
-      {
-        label: S.datingKyle.right.label,
-        tone: "yes",
-        result: S.datingKyle.right.result,
-        effects: { stats: { affairs: 1, wife: 10 } },
+        effects: { stats: { affairs: 1, feds: 8 } },
       },
     ],
   },
@@ -82,13 +61,12 @@ export const SCENARIOS: Scenario[] = [
         label: S.datingBarista.left.label,
         tone: "no",
         result: S.datingBarista.left.result,
-        effects: { stats: { wife: -3 } },
       },
       {
         label: S.datingBarista.right.label,
         tone: "yes",
         result: S.datingBarista.right.result,
-        effects: { stats: { affairs: 1, wife: 12 }, setFlags: ["met_barista"] },
+        effects: { stats: { affairs: 1 }, setFlags: ["met_barista"] },
       },
     ],
   },
@@ -105,18 +83,17 @@ export const SCENARIOS: Scenario[] = [
         label: S.datingBaristaAgain.replyAll.label,
         tone: "yes",
         result: S.datingBaristaAgain.replyAll.result,
-        effects: { stats: { affairs: 2, wife: 20, feds: 3 } },
+        effects: { stats: { affairs: 2, feds: 3 } },
       },
       {
         label: S.datingBaristaAgain.justLattes.label,
         result: S.datingBaristaAgain.justLattes.result,
-        effects: { stats: { affairs: 1, wife: 10 } },
+        effects: { stats: { affairs: 1 } },
       },
       {
         label: S.datingBaristaAgain.block.label,
         tone: "no",
         result: S.datingBaristaAgain.block.result,
-        effects: { stats: { wife: -8 } },
       },
     ],
   },
@@ -132,14 +109,16 @@ export const SCENARIOS: Scenario[] = [
       {
         label: S.datingLori.unmatch.label,
         tone: "no",
-        result: S.datingLori.unmatch.result,
-        effects: { stats: { wife: 20 } },
+        outcomes: [
+          { weight: 2, result: S.datingLori.unmatch.safe },
+          { result: S.datingLori.unmatch.caught, loss: "scandal" },
+        ],
       },
       {
         label: S.datingLori.matchWife.label,
         tone: "yes",
         result: S.datingLori.matchWife.result,
-        effects: { stats: { money: -5, wife: -25 } },
+        effects: { stats: { money: -5 } },
       },
     ],
   },
@@ -279,26 +258,58 @@ export const SCENARIOS: Scenario[] = [
     app: "signal",
     contact: "lori",
     text: S.signalLori.text,
-    requires: [{ stat: "wife", min: 30 }],
+    requires: [{ stat: "affairs", min: 2 }],
     weight: 3,
     choices: [
       {
         label: S.signalLori.supplier.label,
         outcomes: [
-          { weight: 2, result: S.signalLori.supplier.believed, effects: { stats: { wife: -15 } } },
-          { result: S.signalLori.supplier.calls, effects: { stats: { wife: 25 } } },
+          { weight: 2, result: S.signalLori.supplier.believed },
+          { result: S.signalLori.supplier.calls, loss: "scandal" },
         ],
       },
       {
         label: S.signalLori.gift.label,
         requires: [{ stat: "money", min: 30 }],
         result: S.signalLori.gift.result,
-        effects: { stats: { money: -30, wife: -25 } },
+        effects: { stats: { money: -30 } },
       },
       {
         label: S.signalLori.heart.label,
-        result: S.signalLori.heart.result,
-        effects: { stats: { wife: -5 } },
+        outcomes: [
+          { weight: 3, result: S.signalLori.heart.safe },
+          { result: S.signalLori.heart.caught, loss: "scandal" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "signal-tabloid",
+    app: "signal",
+    contact: "tabloid",
+    text: S.signalTabloid.text,
+    requires: [{ stat: "affairs", min: 4 }],
+    weight: 4,
+    choices: [
+      {
+        label: S.signalTabloid.noComment.label,
+        outcomes: [
+          { weight: 2, result: S.signalTabloid.noComment.quiet },
+          { result: S.signalTabloid.noComment.published, loss: "scandal" },
+        ],
+      },
+      {
+        label: S.signalTabloid.payUp.label,
+        requires: [{ stat: "money", min: 15 }],
+        result: S.signalTabloid.payUp.result,
+        effects: { stats: { money: -15 } },
+      },
+      {
+        label: S.signalTabloid.deny.label,
+        outcomes: [
+          { result: S.signalTabloid.deny.believed },
+          { result: S.signalTabloid.deny.caught, loss: "scandal" },
+        ],
       },
     ],
   },

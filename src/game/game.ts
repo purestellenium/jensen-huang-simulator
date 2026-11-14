@@ -13,7 +13,7 @@ export async function startGame(root: HTMLElement): Promise<void> {
 
     while (!state.loss) {
       const scenario = drawScenario(state, SCENARIOS);
-      view.openApp(scenario.app, scenario.contact);
+      view.openApp(scenario.app, scenario.contact, scenario.choices.length);
       await view.say(scenario.text);
 
       const choice = await view.choose(state, scenario.choices);

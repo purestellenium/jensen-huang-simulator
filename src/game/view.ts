@@ -14,7 +14,7 @@ import { STRINGS } from "../strings";
 import { APPS, APP_ORDER } from "./apps";
 import { CONTACTS, type Contact } from "./content";
 import { choiceAvailable, choicePreview, type PreviewPart } from "./engine";
-import type { AppId, Choice, GameState, Stats, Tone } from "./types";
+import { FEDS_PER_STAR, type AppId, type Choice, type GameState, type Stats, type Tone } from "./types";
 
 const TYPE_INTERVAL_MS = 22;
 const TITLE_FACE = 'Impact, "Arial Black", sans-serif';
@@ -26,7 +26,6 @@ const STAT_LABELS: [keyof Stats, string][] = [
   ["money", STRINGS.hud.stats.money],
   ["affairs", STRINGS.hud.stats.affairs],
   ["feds", STRINGS.hud.stats.feds],
-  ["wife", STRINGS.hud.stats.wife],
   ["board", STRINGS.hud.stats.board],
 ];
 
@@ -45,7 +44,9 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, pa
 }
 
 function formatStat(key: keyof Stats, value: number): string {
-  return key === "money" ? STRINGS.amounts.money(value) : String(value);
+  if (key === "money") return STRINGS.amounts.money(value);
+  if (key === "feds") return STRINGS.amounts.stars(Math.ceil(value / FEDS_PER_STAR));
+  return String(value);
 }
 
 const images = new Map<string, HTMLImageElement>();
@@ -139,7 +140,8 @@ export class GameView {
     this.paintArt();
   }
 
-  openApp(app: AppId | null, contactId?: string): void {
+  openApp(app: AppId | null, contactId?: string, choiceCount = 0): void {
+    this.card.style.setProperty("--choice-count", String(choiceCount));
     this.activeApp = app;
     this.contact = contactId ? (CONTACTS[contactId] ?? null) : null;
     if (contactId && !CONTACTS[contactId]) throw new Error(`Unknown contact "${contactId}"`);
@@ -237,6 +239,7 @@ export class GameView {
       window.addEventListener("keydown", onKey);
       this.paintChoices();
       this.paintArt();
+      this.paintText();
     });
   }
 
@@ -245,6 +248,7 @@ export class GameView {
     this.choices.replaceChildren();
     this.paintPreview([]);
     this.paintArt();
+    this.paintText();
   }
 
   private paintAll(): void {
@@ -281,7 +285,7 @@ export class GameView {
       const bounds = this.root.getBoundingClientRect();
       const rect = slot.getBoundingClientRect();
       const apexX = rect.left - bounds.left + rect.width / 2;
-      const apexY = rect.top - bounds.top - 10;
+      const apexY = this.dock.getBoundingClientRect().top - bounds.top - 4;
       if (apexY - bottom >= 10) {
         const baseHalf = 22;
         const baseX = Math.min(Math.max(apexX, card.x + 70), right - 70);
@@ -313,10 +317,12 @@ export class GameView {
     ctx.fillRect(dock.x, dock.y, dock.width, dock.height);
     rc.rectangle(dock.x, dock.y, dock.width, dock.height, {
       seed: 11,
-      roughness: 2,
-      bowing: 3,
+      roughness: 1.8,
+      bowing: 2.5,
+      disableMultiStroke: true,
+      preserveVertices: true,
       stroke: "#fff",
-      strokeWidth: 3,
+      strokeWidth: 4,
     });
 
     const bounds = this.root.getBoundingClientRect();
@@ -342,11 +348,16 @@ export class GameView {
         });
       }
       if (id === this.activeApp) {
-        rc.rectangle(x - 7, y - 7, rect.width + 14, rect.height + 14, {
+        const barWidth = rect.width * 0.5;
+        const barY = y + rect.height + 7;
+        const barX = x + (rect.width - barWidth) / 2;
+        rc.line(barX, barY, barX + barWidth, barY, {
           seed: 30 + index,
-          roughness: 1.6,
+          roughness: 1.5,
+          disableMultiStroke: true,
+          preserveVertices: true,
           stroke: "#fff",
-          strokeWidth: 3,
+          strokeWidth: 4,
         });
       }
     });

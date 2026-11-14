@@ -11,12 +11,12 @@ import type {
   StatKey,
   Stats,
 } from "./types";
-import { STAT_KEYS } from "./types";
+import { FEDS_PER_STAR, MAX_STARS, STAT_KEYS } from "./types";
 
 export type Rng = () => number;
 
-const START_STATS: Stats = { money: 10, affairs: 0, feds: 0, wife: 0, board: 70 };
-const METER_KEYS: StatKey[] = ["feds", "wife", "board"];
+const START_STATS: Stats = { money: 10, affairs: 0, feds: 0, board: 70 };
+const METER_KEYS: StatKey[] = ["feds", "board"];
 
 export function newGame(): GameState {
   return {
@@ -127,8 +127,7 @@ export function choicePreview(choice: Choice): PreviewPart[] {
 }
 
 export function checkLoss(state: GameState): LossKind | null {
-  if (state.stats.feds >= 100) return "feds";
-  if (state.stats.wife >= 100) return "wife";
+  if (state.stats.feds >= MAX_STARS * FEDS_PER_STAR) return "feds";
   if (state.stats.board <= 0) return "board";
   return null;
 }
@@ -138,7 +137,7 @@ export function resolveChoice(state: GameState, choice: Choice, rng: Rng = Math.
   const outcome = outcomeOf(choice, rng);
   applyEffect(state, outcome.effects);
   state.pendingNext = outcome.next ?? null;
-  state.loss = checkLoss(state);
+  state.loss = outcome.loss ?? checkLoss(state);
   state.turn += 1;
   return outcome;
 }

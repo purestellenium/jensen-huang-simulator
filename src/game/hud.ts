@@ -2,16 +2,15 @@ import rough from "roughjs";
 import type { RoughCanvas } from "roughjs/bin/canvas";
 import { NVIDIA_GREEN, TITLE_YELLOW, drawBadPhotoshopText } from "../pixel";
 import { STRINGS } from "../strings";
-import type { Stats } from "./types";
+import { FEDS_PER_STAR, MAX_STARS, type Stats } from "./types";
 
 const TITLE_FACE = 'Impact, "Arial Black", sans-serif';
 const MONEY_GREEN = "#85bb65";
 const LIPSTICK = "#ff2a6a";
 const SIREN_RED = "#ff2a2a";
 const SIREN_BLUE = "#2a5bff";
-const MAX_TALLIES = 15;
-const FEDS_PANIC = 70;
-const WIFE_STEAM = 85;
+const PANIC_STARS = 4;
+const STAR_GAP = 0.15;
 
 interface Rect {
   x: number;
@@ -24,11 +23,9 @@ interface Pen {
   rc: RoughCanvas;
   ctx: CanvasRenderingContext2D;
   seed: number;
-  // Meter length in icon widths.
   meterWidth: number;
 }
 
-// Each chip draws an icon in an s-by-s box at (0, 0) and returns the width it used.
 type Chip = (pen: Pen, s: number, stats: Stats, measureOnly: boolean) => number;
 
 const GAP = 0.2;
@@ -84,13 +81,9 @@ const money: Chip = ({ rc, ctx, seed }, s, stats, measureOnly) => {
 };
 
 const affairs: Chip = ({ rc, ctx, seed }, s, stats, measureOnly) => {
-  const count = stats.affairs;
-  const tallyGap = s * 0.16;
-  const tallies = Math.min(count, MAX_TALLIES);
-  const tallyWidth = tallies === 0 ? 0 : tallies * tallyGap + Math.floor((tallies - 1) / 5) * tallyGap;
-  const extra = count > MAX_TALLIES ? `+${count - MAX_TALLIES}` : count === 0 ? "0" : "";
-  const extraWidth = extra ? label(ctx, extra, 0, 0, s * 0.62, LIPSTICK, true) + tallyGap : 0;
-  const width = s * (1 + GAP) + tallyWidth + extraWidth;
+  const text = String(stats.affairs);
+  const size = s * 0.62;
+  const width = s * (1 + GAP) + label(ctx, text, 0, 0, size, LIPSTICK, true);
   if (measureOnly) return width;
 
   const lips = { seed, fill: LIPSTICK, fillStyle: "solid", stroke: LIPSTICK, strokeWidth: 1.5, roughness: 1.4 };
@@ -98,23 +91,23 @@ const affairs: Chip = ({ rc, ctx, seed }, s, stats, measureOnly) => {
   rc.path(`M ${s * 0.08} ${s * 0.54} Q ${s * 0.5} ${s * 0.98} ${s * 0.92} ${s * 0.54} Z`, lips);
   rc.line(s * 0.14, s * 0.52, s * 0.86, s * 0.52, { seed, stroke: "#000", strokeWidth: 1.5, roughness: 2 });
 
-  let x = s * (1 + GAP);
-  const ink = { seed, stroke: "#fff", strokeWidth: 2.5, roughness: 1.8 };
-  for (let index = 0; index < tallies; index++) {
-    if (index % 5 === 4) {
-      rc.line(x - tallyGap * 4.3, s * 0.72, x + tallyGap * 0.1, s * 0.28, { ...ink, stroke: LIPSTICK });
-      x += tallyGap * 2;
-      continue;
-    }
-    rc.line(x, s * 0.2, x, s * 0.8, ink);
-    x += tallyGap;
-  }
-  if (extra) label(ctx, extra, x, s * 0.78, s * 0.62, LIPSTICK, false);
+  label(ctx, text, s * (1 + GAP), s * 0.78, size, LIPSTICK, false);
   return width;
 };
 
+function starPoints(cx: number, cy: number, outer: number): [number, number][] {
+  const inner = outer * 0.42;
+  const points: [number, number][] = [];
+  for (let index = 0; index < 10; index++) {
+    const radius = index % 2 === 0 ? outer : inner;
+    const angle = -Math.PI / 2 + (index * Math.PI) / 5;
+    points.push([cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius]);
+  }
+  return points;
+}
+
 const feds: Chip = (pen, s, stats, measureOnly) => {
-  const panic = stats.feds >= FEDS_PANIC;
+  const panic = Math.ceil(stats.feds / FEDS_PER_STAR) >= PANIC_STARS;
   const panicWidth = panic ? s * 0.5 : 0;
   const width = s * (1 + GAP) + s * pen.meterWidth + panicWidth;
   if (measureOnly) return width;
@@ -142,57 +135,26 @@ const feds: Chip = (pen, s, stats, measureOnly) => {
   rc.line(s * 0.46, s * 0.22, s * 0.54, s * 0.22, { seed, stroke: "#fff", strokeWidth: 2 });
   label(ctx, "FBI", s * 0.12, s * 0.94, s * 0.42, TITLE_YELLOW, false);
 
-  meter(pen, s * (1 + GAP), s, stats.feds, STRINGS.hud.stats.feds.toUpperCase(), (width, height) => {
-    const stripe = height * 0.8;
-    for (let x = 0, index = 0; x < width; x += stripe, index++) {
-      ctx.fillStyle = index % 2 === 0 ? SIREN_RED : SIREN_BLUE;
-      ctx.fillRect(x, 0, Math.min(stripe, width - x), height);
+  const size = (s * pen.meterWidth) / (MAX_STARS + (MAX_STARS - 1) * STAR_GAP);
+  const left = s * (1 + GAP);
+  for (let index = 0; index < MAX_STARS; index++) {
+    const cx = left + index * size * (1 + STAR_GAP) + size / 2;
+    const cy = s / 2;
+    const points = starPoints(cx, cy, size / 2);
+    const fraction = Math.min(1, Math.max(0, stats.feds / FEDS_PER_STAR - index));
+    if (fraction > 0) {
+      ctx.save();
+      ctx.beginPath();
+      points.forEach(([x, y], corner) => (corner === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
+      ctx.closePath();
+      ctx.clip();
+      ctx.fillStyle = panic ? (index % 2 === 0 ? SIREN_RED : SIREN_BLUE) : "#fff";
+      ctx.fillRect(cx - size / 2, cy - size / 2, size * fraction, size);
+      ctx.restore();
     }
-  });
+    rc.polygon(points, { seed, roughness: 1.2, stroke: fraction > 0 ? "#fff" : "#777", strokeWidth: 2 });
+  }
   if (panic) label(ctx, "!!", s * (1 + GAP + pen.meterWidth + 0.1), s * 0.86, s * 0.8, SIREN_RED, false);
-  return width;
-};
-
-const wife: Chip = (pen, s, stats, measureOnly) => {
-  const steam = stats.wife >= WIFE_STEAM;
-  const width = s * (1 + GAP) + s * pen.meterWidth;
-  if (measureOnly) return width;
-  const { rc, seed } = pen;
-  const mood = stats.wife;
-
-  const skin = mood >= WIFE_STEAM ? "#ff5a3a" : "#f2c29a";
-  rc.arc(s * 0.5, s * 0.5, s * 0.92, s * 0.92, Math.PI, Math.PI * 2, false, { seed, fill: "#5a2a10", fillStyle: "solid", stroke: "#5a2a10", roughness: 1.6 });
-  rc.circle(s * 0.5, s * 0.56, s * 0.74, { seed, fill: skin, fillStyle: "solid", stroke: "#fff", strokeWidth: 2, roughness: 1.4 });
-  const ink = { seed, stroke: "#000", strokeWidth: 2.5, roughness: 1.2 };
-  rc.circle(s * 0.38, s * 0.5, s * 0.08, { ...ink, fill: "#000", fillStyle: "solid" });
-  rc.circle(s * 0.62, s * 0.5, s * 0.08, { ...ink, fill: "#000", fillStyle: "solid" });
-  if (mood >= 60) {
-    rc.line(s * 0.28, s * 0.36, s * 0.44, s * 0.43, ink);
-    rc.line(s * 0.72, s * 0.36, s * 0.56, s * 0.43, ink);
-  }
-  if (mood < 30) {
-    rc.path(`M ${s * 0.34} ${s * 0.68} Q ${s * 0.5} ${s * 0.82} ${s * 0.66} ${s * 0.68}`, ink);
-  } else if (mood < 60) {
-    rc.line(s * 0.36, s * 0.73, s * 0.64, s * 0.73, ink);
-  } else {
-    rc.path(`M ${s * 0.34} ${s * 0.78} Q ${s * 0.5} ${s * 0.64} ${s * 0.66} ${s * 0.78}`, ink);
-  }
-  if (steam) {
-    const puff = { seed, stroke: "#fff", strokeWidth: 2, roughness: 2.2 };
-    rc.path(`M ${s * 0.08} ${s * 0.2} Q ${s * 0} ${s * 0.1} ${s * 0.08} ${s * 0}`, puff);
-    rc.path(`M ${s * 0.92} ${s * 0.2} Q ${s * 1} ${s * 0.1} ${s * 0.92} ${s * 0}`, puff);
-  }
-
-  meter(pen, s * (1 + GAP), s, stats.wife, STRINGS.hud.stats.wife.toUpperCase(), (width, height) => {
-    rc.rectangle(0, 0, width, height, {
-      seed,
-      fill: LIPSTICK,
-      fillStyle: "cross-hatch",
-      hachureGap: 4,
-      fillWeight: 2.5,
-      stroke: "none",
-    });
-  });
   return width;
 };
 
@@ -241,9 +203,8 @@ const board: Chip = (pen, s, stats, measureOnly) => {
   return width;
 };
 
-const CHIPS: Chip[] = [money, affairs, feds, wife, board];
+const CHIPS: Chip[] = [money, affairs, feds, board];
 const CHIP_GAP = 0.55;
-// Below this fit scale on one row, the meters move to a second row.
 const MIN_ROW_SCALE = 0.6;
 const MARGIN = 16;
 
@@ -251,7 +212,6 @@ interface Row {
   chips: number[];
   y: number;
   height: number;
-  // Space taken on the left of the row by the turn label.
   reserved: number;
 }
 
@@ -297,7 +257,7 @@ export function paintHud(ctx: CanvasRenderingContext2D, rect: Rect, stats: Stats
     return ctx.measureText(turnLabel).width + MARGIN;
   };
 
-  const single: Row = { chips: [0, 1, 2, 3, 4], y: rect.y, height: rect.height, reserved: measureTurn(rect.height) };
+  const single: Row = { chips: [0, 1, 2, 3], y: rect.y, height: rect.height, reserved: measureTurn(rect.height) };
   if (rowFit(ctx, pens, stats, rect, single).scale >= MIN_ROW_SCALE) {
     paintTurn(single.y, single.height);
     drawRow(ctx, pens, stats, rect, single);
@@ -305,10 +265,9 @@ export function paintHud(ctx: CanvasRenderingContext2D, rect: Rect, stats: Stats
   }
 
   for (const pen of pens) pen.meterWidth = NARROW_METER_WIDTH;
-  // The meter row is wider, so it gets more of the height.
   const topHeight = (rect.height - 3) * 0.4;
   const top: Row = { chips: [0, 1], y: rect.y, height: topHeight, reserved: measureTurn(topHeight) };
-  const bottom: Row = { chips: [2, 3, 4], y: rect.y + topHeight, height: rect.height - 3 - topHeight, reserved: 0 };
+  const bottom: Row = { chips: [2, 3], y: rect.y + topHeight, height: rect.height - 3 - topHeight, reserved: 0 };
   paintTurn(top.y, top.height);
   drawRow(ctx, pens, stats, rect, top);
   drawRow(ctx, pens, stats, rect, bottom);
