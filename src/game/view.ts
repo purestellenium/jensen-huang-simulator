@@ -3,13 +3,13 @@ import {
   NVIDIA_GREEN,
   SPRITE_COLOR_LEVELS,
   SPRITE_RESOLUTION_SCALE,
-  TITLE_YELLOW,
   crush,
   drawBadPhotoshopText,
   sizeCanvas,
   wrapText,
 } from "../pixel";
 import { outlineButtonArt } from "../sketch";
+import { paintHud } from "./hud";
 import { STRINGS } from "../strings";
 import { APPS, APP_ORDER } from "./apps";
 import { CONTACTS, type Contact } from "./content";
@@ -262,50 +262,11 @@ export class GameView {
       return { x: rect.left - bounds.left, y: rect.top - bounds.top, width: rect.width, height: rect.height };
     };
 
-    this.paintHud(ctx, at(this.hud));
+    paintHud(ctx, at(this.hud), this.stats, this.turn);
     this.paintCard(ctx, at(this.card), this.contact ? at(this.portrait) : null);
     this.paintDock(ctx, at(this.dock));
     crush(ctx);
     this.paintPortrait(bounds, this.contact ? at(this.portrait) : null);
-  }
-
-  private paintHud(ctx: CanvasRenderingContext2D, rect: Rect): void {
-    ctx.fillStyle = "#000";
-    ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-    ctx.fillStyle = NVIDIA_GREEN;
-    ctx.fillRect(rect.x, rect.y + rect.height - 3, rect.width, 3);
-    if (!this.stats) return;
-
-    const stats = this.stats;
-    const margin = 16;
-    const baseline = rect.y + rect.height * 0.64;
-    const turnLabel = `${STRINGS.hud.turn} ${this.turn}`;
-
-    let size = rect.height * 0.42;
-    const measure = (fontSize: number) => {
-      const gap = fontSize * 0.9;
-      ctx.font = `${fontSize}px ${TITLE_FACE}`;
-      const turnWidth = ctx.measureText(turnLabel).width;
-      ctx.font = `bold ${fontSize}px ${TEXT_FACE}`;
-      const entries = STAT_LABELS.map(([key, label]) => `${label.toUpperCase()} ${formatStat(key, stats[key])}`);
-      const widths = entries.map((entry) => ctx.measureText(entry).width);
-      return { gap, turnWidth, entries, widths, total: turnWidth + widths.reduce((a, b) => a + b + gap, 0) };
-    };
-    let layout = measure(size);
-    const available = rect.width - margin * 2;
-    if (layout.total > available) {
-      size *= available / layout.total;
-      layout = measure(size);
-    }
-
-    drawBadPhotoshopText(ctx, turnLabel, rect.x + margin, baseline, size, `${size}px ${TITLE_FACE}`, TITLE_YELLOW, "#000", null);
-    let cursor = rect.x + rect.width - margin;
-    for (let index = STAT_LABELS.length - 1; index >= 0; index--) {
-      const width = layout.widths[index]!;
-      cursor -= width;
-      drawBadPhotoshopText(ctx, layout.entries[index]!, cursor, baseline, size, `bold ${size}px ${TEXT_FACE}`, "#fff", "#000", null);
-      cursor -= layout.gap;
-    }
   }
 
   private paintCard(ctx: CanvasRenderingContext2D, card: Rect, portrait: Rect | null): void {
