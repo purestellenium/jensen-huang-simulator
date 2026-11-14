@@ -365,15 +365,21 @@ export class GameView {
       const rect = slot.getBoundingClientRect();
       const x = rect.left - bounds.left;
       const y = rect.top - bounds.top;
-      rc.rectangle(x, y, rect.width, rect.height, {
-        seed: 20 + index,
-        roughness: 1.6,
-        bowing: 2,
-        fill: APPS[id].color,
-        fillStyle: "solid",
-        stroke: APPS[id].color,
-        strokeWidth: 3,
-      });
+      const icon = imageFor(APPS[id].icon, () => this.paintArt());
+      if (icon) {
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(icon, x, y, rect.width, rect.height);
+      } else {
+        rc.rectangle(x, y, rect.width, rect.height, {
+          seed: 20 + index,
+          roughness: 1.6,
+          bowing: 2,
+          fill: APPS[id].color,
+          fillStyle: "solid",
+          stroke: APPS[id].color,
+          strokeWidth: 3,
+        });
+      }
       if (id === this.activeApp) {
         rc.rectangle(x - 7, y - 7, rect.width + 14, rect.height + 14, {
           seed: 30 + index,

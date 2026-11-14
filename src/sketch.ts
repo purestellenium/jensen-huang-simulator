@@ -19,10 +19,11 @@ export function outlineButtonArt(label: string, width: number, height: number, o
   const { fontSize, paddingLeft, paddingRight, seed } = options;
 
   const accent = options.disabled ? "#777" : options.color;
-  const textColor = options.hover && !options.disabled ? "#000" : accent;
+  const filled = options.hover && !options.disabled;
+  const textColor = filled ? "#000" : accent;
   const inset = 5;
 
-  ctx.fillStyle = options.hover && !options.disabled ? accent : "#000";
+  ctx.fillStyle = filled ? accent : "#000";
   ctx.fillRect(inset, inset, width - inset * 2, height - inset * 2);
   rc.rectangle(inset, inset, width - inset * 2, height - inset * 2, {
     seed,
@@ -58,7 +59,7 @@ export function outlineButtonArt(label: string, width: number, height: number, o
   const lineHeight = fontSize * 1.25;
   const top = (height - lines.length * lineHeight) / 2;
   lines.forEach((line, index) => {
-    drawBadPhotoshopText(ctx, line, paddingLeft, top + index * lineHeight + fontSize * 0.95, fontSize, font, textColor, "#000", null);
+    drawBadPhotoshopText(ctx, line, paddingLeft, top + index * lineHeight + fontSize * 0.95, fontSize, font, textColor, filled ? accent : "#000", null);
   });
 
   crush(ctx);
