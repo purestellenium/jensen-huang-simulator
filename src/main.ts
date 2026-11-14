@@ -5,12 +5,12 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { startOverlay, type Mode } from "./overlay";
+import { startGame } from "./game/game";
+import { STRINGS } from "./strings";
 
-const MODEL_URLS: Record<Mode, string> = {
-  jensen: "/models/jensen.glb",
-  hackclub: "/models/scan.glb",
-};
-// Fraction of device resolution the scene is rendered at before being upscaled.
+const JENSEN_SPRITE_URL = "/images/jensen.png";
+const JENSEN_SPRITE_HEIGHT = 1.8;
+const HACKCLUB_MODEL_URL = "/models/scan.glb";
 const RESOLUTION_SCALE = 0.3;
 const POSTERIZE_LEVELS = 6;
 const TURNTABLE_RADIANS_PER_SECOND = 0.6;
@@ -25,6 +25,10 @@ const startButton = document.querySelector<HTMLButtonElement>("#start");
 if (!startButton) throw new Error("#start button missing");
 const secretButton = document.querySelector<HTMLButtonElement>("#secret");
 if (!secretButton) throw new Error("#secret button missing");
+document.title = STRINGS.document.title;
+overlay.setAttribute("aria-label", STRINGS.document.title);
+startButton.textContent = STRINGS.title.start;
+secretButton.textContent = STRINGS.title.secret;
 const ui = startOverlay(overlay, doodles, startButton, secretButton);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
@@ -48,14 +52,14 @@ const posterize = new ShaderPass({
     tDiffuse: { value: null },
     levels: { value: POSTERIZE_LEVELS },
   },
-  vertexShader: /* glsl */ `
+  vertexShader: `
     varying vec2 vUv;
     void main() {
       vUv = uv;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `,
-  fragmentShader: /* glsl */ `
+  fragmentShader: `
     uniform sampler2D tDiffuse;
     uniform float levels;
     varying vec2 vUv;
@@ -103,7 +107,6 @@ function resize(): void {
   const width = window.innerWidth;
   const height = window.innerHeight;
   camera.aspect = width / height;
-  // On landscape screens, push the model right so the title has room on the left.
   camera.filmOffset = camera.aspect > 1 ? -camera.getFilmWidth() * 0.22 : 0;
   camera.updateProjectionMatrix();
   renderer.setSize(width, height, false);
@@ -113,44 +116,61 @@ function resize(): void {
   if (active) frameCamera(active.size);
 }
 
-const loader = new GLTFLoader();
-for (const [key, url] of Object.entries(MODEL_URLS) as [Mode, string][]) {
-  loader.load(
-    url,
-    (gltf) => {
-      const object = gltf.scene;
-      object.traverse((node) => {
-        if (node instanceof THREE.Mesh) {
-          const materials = Array.isArray(node.material) ? node.material : [node.material];
-          for (const material of materials) {
-            if ("map" in material && material.map instanceof THREE.Texture) {
-              material.map.magFilter = THREE.NearestFilter;
-              material.map.needsUpdate = true;
-            }
+new THREE.TextureLoader().load(
+  JENSEN_SPRITE_URL,
+  (texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.magFilter = THREE.NearestFilter;
+    const { width, height } = texture.image as { width: number; height: number };
+    const planeWidth = JENSEN_SPRITE_HEIGHT * (width / height);
+    const sprite = new THREE.Mesh(
+      new THREE.PlaneGeometry(planeWidth, JENSEN_SPRITE_HEIGHT),
+      new THREE.MeshBasicMaterial({ map: texture, alphaTest: 0.5 }),
+    );
+    scene.add(sprite);
+    models.jensen = { object: sprite, size: new THREE.Vector3(planeWidth, JENSEN_SPRITE_HEIGHT, 0) };
+    showMode(mode);
+  },
+  undefined,
+  (error) => {
+    throw error;
+  },
+);
+
+new GLTFLoader().load(
+  HACKCLUB_MODEL_URL,
+  (gltf) => {
+    const object = gltf.scene;
+    object.traverse((node) => {
+      if (node instanceof THREE.Mesh) {
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        for (const material of materials) {
+          if ("map" in material && material.map instanceof THREE.Texture) {
+            material.map.magFilter = THREE.NearestFilter;
+            material.map.needsUpdate = true;
           }
         }
-      });
-      // Measured before joining the turntable, so the box is in the model's own space.
-      const box = new THREE.Box3().setFromObject(object);
-      object.position.sub(box.getCenter(new THREE.Vector3()));
-      models[key] = { object, size: box.getSize(new THREE.Vector3()) };
-      turntable.add(object);
-      showMode(mode);
-    },
-    undefined,
-    (error) => {
-      throw error;
-    },
-  );
-}
+      }
+    });
+    const box = new THREE.Box3().setFromObject(object);
+    object.position.sub(box.getCenter(new THREE.Vector3()));
+    models.hackclub = { object, size: box.getSize(new THREE.Vector3()) };
+    turntable.add(object);
+    showMode(mode);
+  },
+  undefined,
+  (error) => {
+    throw error;
+  },
+);
 
+let onTitleScreen = true;
 window.addEventListener("keydown", (event) => {
-  if (event.key === "Shift") showMode("hackclub");
+  if (onTitleScreen && event.key === "Shift") showMode("hackclub");
 });
 window.addEventListener("keyup", (event) => {
-  if (event.key === "Shift") showMode("jensen");
+  if (onTitleScreen && event.key === "Shift") showMode("jensen");
 });
-// A released key is never reported to a window without focus.
 window.addEventListener("blur", () => showMode("jensen"));
 window.addEventListener("resize", resize);
 resize();
@@ -160,4 +180,17 @@ renderer.setAnimationLoop((time) => {
   timer.update(time);
   turntable.rotation.y += timer.getDelta() * TURNTABLE_RADIANS_PER_SECOND;
   composer.render();
+});
+
+startButton.addEventListener("click", () => {
+  onTitleScreen = false;
+  ui.stop();
+  renderer.setAnimationLoop(null);
+  for (const node of [canvas, overlay, doodles, document.querySelector("main")]) {
+    if (node) node.hidden = true;
+  }
+  const game = document.querySelector<HTMLElement>("#game");
+  if (!game) throw new Error("#game missing");
+  game.hidden = false;
+  void startGame(game);
 });

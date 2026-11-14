@@ -1,0 +1,187 @@
+#game {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 3.4rem 1fr auto;
+  background: #2a2a2a;
+  font-family: Arial, sans-serif;
+}
+
+#game[hidden] {
+  display: none;
+}
+
+.art,
+.text-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.hud {
+  position: relative;
+}
+
+.table {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 0;
+  padding: 3.4rem 1.2rem 3.6rem;
+}
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: clamp(7rem, 24%, 14rem) 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 1.4rem 1.8rem;
+  box-sizing: border-box;
+  width: min(100%, 64rem);
+  min-height: clamp(18rem, 52vh, 32rem);
+  padding: 2.2rem 2.4rem;
+}
+
+.portrait {
+  grid-row: 1;
+  align-self: start;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.portrait[hidden] {
+  display: none;
+}
+
+.message {
+  position: relative;
+  grid-row: 1;
+  min-width: 0;
+  font-size: clamp(1.4rem, 2.6vw, 2.1rem);
+  cursor: pointer;
+}
+
+.card.no-portrait .message {
+  grid-column: 1 / -1;
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.choices {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.4rem;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  min-height: 4.6rem;
+  padding: 0.6em 1.2em 0.6em 1em;
+  font: bold clamp(1.1rem, 1.8vw, 1.5rem) Arial, sans-serif;
+  text-align: left;
+  color: transparent;
+  background: var(--art) center / 100% 100% no-repeat;
+  border: 0;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+
+.choice[data-tone="yes"],
+.choice[data-tone="no"] {
+  padding-left: 3.2em;
+}
+
+.choice:hover:not(:disabled),
+.choice:focus-visible {
+  background-image: var(--art-hover);
+  outline: none;
+}
+
+.choice:active:not(:disabled) {
+  transform: translate(3px, 3px);
+}
+
+.choice:disabled {
+  cursor: not-allowed;
+}
+
+.cue {
+  position: absolute;
+  right: 1.6rem;
+  bottom: 1.4rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  image-rendering: pixelated;
+  animation: bob 0.7s steps(2) infinite;
+}
+
+.cue[hidden] {
+  display: none;
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+.preview {
+  position: absolute;
+  top: -2.6rem;
+  left: 0;
+  width: 100%;
+  height: 5.2rem;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.dock {
+  position: relative;
+  display: flex;
+  gap: 1.8rem;
+  justify-self: center;
+  margin-bottom: 1.2rem;
+  padding: 0.9rem 1.5rem;
+}
+
+.app {
+  width: 4.4rem;
+  height: 4.4rem;
+}
+
+@media (max-width: 640px) {
+  .table {
+    padding: 3rem 0.6rem 3.2rem;
+  }
+
+  .card {
+    grid-template-columns: 6rem 1fr;
+    gap: 1rem 1.1rem;
+    padding: 1.4rem 1.3rem;
+  }
+
+  .choices {
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+
+  .app {
+    width: 3.4rem;
+    height: 3.4rem;
+  }
+}

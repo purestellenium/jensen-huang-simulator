@@ -1,9 +1,17 @@
 import rough from "roughjs";
 import type { RoughCanvas } from "roughjs/bin/canvas";
+import {
+  NVIDIA_GREEN,
+  RESOLUTION_SCALE,
+  TITLE_YELLOW,
+  buttonArt,
+  context2d,
+  crush,
+  drawBadPhotoshopText,
+  type ButtonColors,
+} from "./pixel";
+import { STRINGS } from "./strings";
 
-const NVIDIA_GREEN = "#76b900";
-const TITLE_YELLOW = "#ffe600";
-// https://hackclub.com/brand/
 const HC_RED = "#ec3750";
 const HC_ORANGE = "#ff8c37";
 const HC_YELLOW = "#f1c40f";
@@ -11,15 +19,9 @@ const HC_GREEN = "#33d6a6";
 const HC_CYAN = "#5bc0de";
 const HC_BLUE = "#338eda";
 const HC_PURPLE = "#a633d6";
-// Fraction of device resolution 2D art is drawn at before being upscaled.
-const RESOLUTION_SCALE = 0.5;
 const DOODLE_RESOLUTION_SCALE = 0.33;
-// Line boil: doodles cycle through a few jittered variants.
 const BOIL_VARIANTS = 3;
 const BOIL_INTERVAL_MS = 140;
-// Per-channel colour levels after crushing; low values give hard banding.
-const COLOR_LEVELS = 4;
-const ALPHA_THRESHOLD = 110;
 const SEED = 4;
 
 type Rng = () => number;
@@ -36,63 +38,6 @@ function mulberry32(seed: number): Rng {
 
 function jitter(rng: Rng, amount: number): number {
   return (rng() * 2 - 1) * amount;
-}
-
-function context2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) throw new Error("2d context unavailable");
-  return ctx;
-}
-
-// Removes antialiasing: every pixel becomes fully opaque or fully transparent,
-// and colours snap to a few levels per channel.
-function crush(ctx: CanvasRenderingContext2D): void {
-  const { width, height } = ctx.canvas;
-  if (width === 0 || height === 0) return;
-  const image = ctx.getImageData(0, 0, width, height);
-  const data = image.data;
-  const step = 255 / (COLOR_LEVELS - 1);
-  // Indices stay below data.length, so the non-null assertions hold.
-  for (let i = 0; i < data.length; i += 4) {
-    if (data[i + 3]! < ALPHA_THRESHOLD) {
-      data[i + 3] = 0;
-      continue;
-    }
-    for (let channel = i; channel < i + 3; channel++) {
-      data[channel] = Math.round(data[channel]! / step) * step;
-    }
-    data[i + 3] = 255;
-  }
-  ctx.putImageData(image, 0, 0);
-}
-
-// The "stroke" you get from stamping the text in a circle instead of using a real outline.
-function drawBadPhotoshopText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  size: number,
-  font: string,
-  fill: string,
-  stroke: string,
-  shadow: string | null,
-): number {
-  ctx.font = font;
-  ctx.textBaseline = "alphabetic";
-  const strokeRadius = size * 0.06;
-  if (shadow) {
-    ctx.fillStyle = shadow;
-    ctx.fillText(text, x + size * 0.09, y + size * 0.07);
-  }
-  ctx.fillStyle = stroke;
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2;
-    ctx.fillText(text, x + Math.cos(angle) * strokeRadius, y + Math.sin(angle) * strokeRadius);
-  }
-  ctx.fillStyle = fill;
-  ctx.fillText(text, x, y);
-  return x + ctx.measureText(text).width;
 }
 
 function drawWobblyText(
@@ -151,7 +96,7 @@ function drawEyeLogo(rc: RoughCanvas, ctx: CanvasRenderingContext2D, rng: Rng, s
   }
   rc.curve(spiral, { seed, stroke: "#fff", strokeWidth: size * 0.045, roughness: 1.5 });
 
-  drawWobblyText(ctx, rng, "NVIDIA", x + size * 0.02, y + size * 1.1, size * 0.34, "#fff", NVIDIA_GREEN);
+  drawWobblyText(ctx, rng, STRINGS.title.logo.nvidia, x + size * 0.02, y + size * 1.1, size * 0.34, "#fff", NVIDIA_GREEN);
 }
 
 function drawGpu(rc: RoughCanvas, seed: number, x: number, y: number, width: number): void {
@@ -225,7 +170,7 @@ function drawHackClubLogo(rc: RoughCanvas, ctx: CanvasRenderingContext2D, rng: R
   rc.line(stem, top, stem, bottom, ink);
   rc.path(arch, ink);
 
-  drawWobblyText(ctx, rng, "hack club", x - size * 0.05, y + size * 1.1, size * 0.3, "#fff", HC_RED);
+  drawWobblyText(ctx, rng, STRINGS.title.logo.hackclub, x - size * 0.05, y + size * 1.1, size * 0.3, "#fff", HC_RED);
 }
 
 function drawLaptop(rc: RoughCanvas, seed: number, x: number, y: number, width: number): void {
@@ -261,27 +206,20 @@ function drawLaptop(rc: RoughCanvas, seed: number, x: number, y: number, width: 
 
 export type Mode = "jensen" | "hackclub";
 
-interface ButtonColors {
-  fill: string;
-  ink: string;
-  outline: string;
-}
-
 interface Theme {
-  title: [string, string];
+  title: readonly [string, string];
   titleFill: string;
   titleShadow: string;
   underline: string;
   button: ButtonColors;
   drawLogo: typeof drawEyeLogo;
   drawProp: typeof drawGpu;
-  // Prop height as a fraction of its width.
   propAspect: number;
 }
 
 const THEMES: Record<Mode, Theme> = {
   jensen: {
-    title: ["JENSEN HUANG", "SIMULATOR"],
+    title: STRINGS.title.jensen,
     titleFill: TITLE_YELLOW,
     titleShadow: NVIDIA_GREEN,
     underline: NVIDIA_GREEN,
@@ -291,7 +229,7 @@ const THEMES: Record<Mode, Theme> = {
     propAspect: 0.5,
   },
   hackclub: {
-    title: ["HACK CLUB", "SIMULATOR"],
+    title: STRINGS.title.hackclub,
     titleFill: HC_RED,
     titleShadow: HC_ORANGE,
     underline: HC_YELLOW,
@@ -368,32 +306,6 @@ function drawDoodles(canvas: HTMLCanvasElement, theme: Theme, variant: number): 
   ctx.restore();
 }
 
-function buttonArt(label: string, width: number, height: number, colors: ButtonColors): string {
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(width * RESOLUTION_SCALE));
-  canvas.height = Math.max(1, Math.round(height * RESOLUTION_SCALE));
-  const ctx = context2d(canvas);
-  ctx.setTransform(RESOLUTION_SCALE, 0, 0, RESOLUTION_SCALE, 0, 0);
-
-  const shadow = height * 0.1;
-  ctx.fillStyle = "#000";
-  ctx.fillRect(shadow, shadow, width - shadow, height - shadow);
-  ctx.fillStyle = colors.fill;
-  ctx.fillRect(0, 0, width - shadow, height - shadow);
-  ctx.strokeStyle = colors.ink;
-  ctx.lineWidth = height * 0.06;
-  ctx.strokeRect(ctx.lineWidth / 2, ctx.lineWidth / 2, width - shadow - ctx.lineWidth, height - shadow - ctx.lineWidth);
-
-  const size = height * 0.5;
-  const font = `bold ${size}px Arial`;
-  ctx.font = font;
-  const textWidth = ctx.measureText(label).width;
-  drawBadPhotoshopText(ctx, label, (width - shadow - textWidth) / 2, height * 0.6, size, font, colors.ink, colors.outline, null);
-
-  crush(ctx);
-  return canvas.toDataURL("image/png");
-}
-
 function paintButton(button: HTMLButtonElement, colors: ButtonColors): void {
   if (button.hidden) return;
   const { width, height } = button.getBoundingClientRect();
@@ -405,6 +317,7 @@ function paintButton(button: HTMLButtonElement, colors: ButtonColors): void {
 
 export interface Overlay {
   setMode(mode: Mode): void;
+  stop(): void;
 }
 
 export function startOverlay(
@@ -416,9 +329,11 @@ export function startOverlay(
   let mode: Mode = "jensen";
   let variant = 0;
   let fontsReady = false;
+  let stopped = false;
+  let boilTimer: ReturnType<typeof setInterval> | undefined;
 
   const draw = () => {
-    if (!fontsReady) return;
+    if (!fontsReady || stopped) return;
     const theme = THEMES[mode];
     secret.hidden = mode !== "hackclub";
     drawTitle(title, theme);
@@ -428,11 +343,11 @@ export function startOverlay(
   };
 
   window.addEventListener("resize", draw);
-  // Fonts must be ready before measuring and rasterising text.
   void document.fonts.ready.then(() => {
+    if (stopped) return;
     fontsReady = true;
     draw();
-    setInterval(() => {
+    boilTimer = setInterval(() => {
       variant = (variant + 1) % BOIL_VARIANTS;
       drawDoodles(doodles, THEMES[mode], variant);
     }, BOIL_INTERVAL_MS);
@@ -443,6 +358,10 @@ export function startOverlay(
       if (next === mode) return;
       mode = next;
       draw();
+    },
+    stop() {
+      stopped = true;
+      clearInterval(boilTimer);
     },
   };
 }

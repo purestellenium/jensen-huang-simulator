@@ -30,6 +30,10 @@ main {
   pointer-events: none;
 }
 
+main[hidden] {
+  display: none;
+}
+
 nav {
   position: relative;
   display: flex;
