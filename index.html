@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jensen Huang Simulator</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+    <canvas id="doodles" aria-hidden="true"></canvas>
+    <main>
+      <h1><canvas id="overlay" role="img" aria-label="Jensen Huang Simulator"></canvas></h1>
+      <nav>
+        <button type="button" id="start">Start</button>
+        <button type="button" id="secret" hidden>Secret Mode</button>
+      </nav>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
