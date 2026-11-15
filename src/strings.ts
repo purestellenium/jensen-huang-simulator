@@ -9,13 +9,22 @@ export const STRINGS = {
 
   title: {
     jensen: ["JENSEN HUANG", "SIMULATOR"],
-    hackclub: ["HACK CLUB", "SIMULATOR"],
+    disclaimer: [
+      "A work of parody and satire. All events are fictional.",
+      "Not affiliated with or endorsed by NVIDIA or Jensen Huang.",
+    ],
+    byline: [
+      { text: "by " },
+      { text: "stelle", href: "https://stelle.codes" },
+      { text: ", " },
+      { text: "natey", href: "https://natey.me" },
+      { text: " and " },
+      { text: "TheTridentGuy", href: "https://thetridentguy.com" },
+    ] as { text: string; href?: string }[],
     start: "Start",
     settings: "Options",
-    secret: "Secret Mode",
     logo: {
       nvidia: "NVIDIA",
-      hackclub: "Hack Club",
     },
   },
 

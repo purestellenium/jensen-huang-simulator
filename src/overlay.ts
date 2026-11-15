@@ -6,16 +6,13 @@ import {
   TITLE_YELLOW,
   buttonArt,
   context2d,
+  sizeCanvas,
   crush,
   drawBadPhotoshopText,
   type ButtonColors,
 } from "./pixel";
 import { STRINGS } from "./strings";
 
-const HC_RED = "#ec3750";
-const HC_ORANGE = "#ff8c37";
-const HC_YELLOW = "#f1c40f";
-const HC_PURPLE = "#a633d6";
 const DOODLE_RESOLUTION_SCALE = 0.33;
 const BOIL_VARIANTS = 3;
 const BOIL_INTERVAL_MS = 140;
@@ -96,64 +93,49 @@ function drawEyeLogo(rc: RoughCanvas, ctx: CanvasRenderingContext2D, rng: Rng, s
   drawWobblyText(ctx, rng, STRINGS.title.logo.nvidia, x + size * 0.02, y + size * 1.1, size * 0.34, "#fff", NVIDIA_GREEN);
 }
 
-function drawHackClubLogo(rc: RoughCanvas, ctx: CanvasRenderingContext2D, rng: Rng, seed: number, x: number, y: number, size: number): void {
-  const r = size * 0.22;
-  const s = size * 0.8;
-  const box = `M ${x + r} ${y} L ${x + s - r} ${y} Q ${x + s} ${y} ${x + s} ${y + r} L ${x + s} ${y + s - r} Q ${x + s} ${y + s} ${x + s - r} ${y + s} L ${x + r} ${y + s} Q ${x} ${y + s} ${x} ${y + s - r} L ${x} ${y + r} Q ${x} ${y} ${x + r} ${y} Z`;
-  rc.path(box, {
-    seed,
-    fill: HC_RED,
-    fillStyle: "hachure",
-    hachureGap: size * 0.05,
-    fillWeight: size * 0.03,
-    stroke: HC_RED,
-    strokeWidth: 2,
-    roughness: 2.5,
-  });
-
-  const stem = x + s * 0.32;
-  const top = y + s * 0.18;
-  const bottom = y + s * 0.82;
-  const arch = `M ${stem} ${y + s * 0.55} Q ${stem + s * 0.1} ${y + s * 0.4} ${x + s * 0.5} ${y + s * 0.4} Q ${x + s * 0.68} ${y + s * 0.4} ${x + s * 0.68} ${y + s * 0.58} L ${x + s * 0.68} ${bottom}`;
-  const ink = { seed, stroke: "#fff", strokeWidth: size * 0.1, roughness: 1.8 };
-  rc.line(stem, top, stem, bottom, ink);
-  rc.path(arch, ink);
-
-  drawWobblyText(ctx, rng, STRINGS.title.logo.hackclub, x - size * 0.05, y + size * 1.1, size * 0.3, "#fff", HC_RED);
-}
-
-export type Mode = "jensen" | "hackclub";
-
 interface Theme {
   title: readonly [string, string];
   titleFill: string;
   titleShadow: string;
   underline: string;
   button: ButtonColors;
-  drawLogo: typeof drawEyeLogo;
 }
 
-const THEMES: Record<Mode, Theme> = {
-  jensen: {
-    title: STRINGS.title.jensen,
-    titleFill: TITLE_YELLOW,
-    titleShadow: NVIDIA_GREEN,
-    underline: NVIDIA_GREEN,
-    button: { fill: NVIDIA_GREEN, ink: "#000", outline: "#fff" },
-    drawLogo: drawEyeLogo,
-  },
-  hackclub: {
-    title: STRINGS.title.hackclub,
-    titleFill: HC_RED,
-    titleShadow: HC_ORANGE,
-    underline: HC_YELLOW,
-    button: { fill: HC_RED, ink: "#fff", outline: "#000" },
-    drawLogo: drawHackClubLogo,
-  },
+const THEME: Theme = {
+  title: STRINGS.title.jensen,
+  titleFill: TITLE_YELLOW,
+  titleShadow: NVIDIA_GREEN,
+  underline: NVIDIA_GREEN,
+  button: { fill: NVIDIA_GREEN, ink: "#000", outline: "#fff" },
 };
 
-const SECRET_BUTTON: ButtonColors = { fill: HC_PURPLE, ink: "#fff", outline: "#000" };
 const SETTINGS_BUTTON: ButtonColors = { fill: "#9a9a9a", ink: "#000", outline: "#fff" };
+
+const NOTICE_SCALE = 0.75;
+
+function drawNotice(width: number, height: number, size: number): void {
+  const canvas = document.querySelector<HTMLCanvasElement>("#notice");
+  if (!canvas) return;
+  const lines = STRINGS.title.disclaimer;
+  const lineHeight = size * 1.3;
+  const cssHeight = Math.ceil(lines.length * lineHeight + size * 0.5);
+  const cssWidth = Math.ceil(Math.min(width * 0.9, size * 0.62 * Math.max(...lines.map((line) => line.length)) + size));
+  const ctx = sizeCanvas(canvas, cssWidth, cssHeight, NOTICE_SCALE);
+  canvas.style.width = `${cssWidth}px`;
+  canvas.style.height = `${cssHeight}px`;
+  canvas.setAttribute("aria-label", lines.join(" "));
+  ctx.font = `bold ${size}px Arial, sans-serif`;
+  ctx.textBaseline = "alphabetic";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = size * 0.28;
+  ctx.strokeStyle = "#000";
+  ctx.fillStyle = "#fff";
+  lines.forEach((line, index) => {
+    const y = size + index * lineHeight;
+    ctx.strokeText(line, size * 0.2, y);
+    ctx.fillText(line, size * 0.2, y);
+  });
+}
 
 function drawTitle(canvas: HTMLCanvasElement, theme: Theme): void {
   const ctx = context2d(canvas);
@@ -193,9 +175,43 @@ function drawTitle(canvas: HTMLCanvasElement, theme: Theme): void {
   ctx.restore();
 
   crush(ctx);
+
+  const bylineSize = Math.min(Math.max(width * 0.03, 20), 42);
+  ctx.font = `${bylineSize}px ${titleFace}`;
+  ctx.textBaseline = "alphabetic";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = bylineSize * 0.14;
+  ctx.strokeStyle = "#000";
+  ctx.fillStyle = NVIDIA_GREEN;
+  const noticeSize = Math.min(Math.max(width * 0.0115, 11), 16);
+  drawNotice(width, height, noticeSize);
+  const noticeLines = STRINGS.title.disclaimer;
+  const lastNoticeY = height - height * 0.012;
+  const bylineY = lastNoticeY - noticeLines.length * noticeSize * 1.25 - bylineSize * 0.2 - noticeSize * 1.2;
+  const credits = document.querySelector<HTMLElement>("#credits");
+  credits?.replaceChildren();
+  let cursor = left;
+  for (const part of STRINGS.title.byline) {
+    ctx.strokeText(part.text, cursor, bylineY);
+    ctx.fillText(part.text, cursor, bylineY);
+    const advance = ctx.measureText(part.text).width;
+    if (part.href && credits) {
+      const link = document.createElement("a");
+      link.href = part.href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.setAttribute("aria-label", part.text);
+      link.style.left = `${cursor}px`;
+      link.style.top = `${bylineY - bylineSize * 0.85}px`;
+      link.style.width = `${advance}px`;
+      link.style.height = `${bylineSize * 1.05}px`;
+      credits.append(link);
+    }
+    cursor += advance;
+  }
 }
 
-function drawDoodles(canvas: HTMLCanvasElement, theme: Theme, variant: number): void {
+function drawDoodles(canvas: HTMLCanvasElement, variant: number): void {
   const ctx = context2d(canvas);
   const rc = rough.canvas(canvas);
   const seed = variant + 1;
@@ -209,7 +225,7 @@ function drawDoodles(canvas: HTMLCanvasElement, theme: Theme, variant: number): 
   ctx.imageSmoothingEnabled = false;
 
   const logoSize = Math.min(Math.max(width * 0.09, 70), 130);
-  theme.drawLogo(rc, ctx, rng, seed, width - logoSize - width * 0.04, height * 0.05, logoSize);
+  drawEyeLogo(rc, ctx, rng, seed, width - logoSize - width * 0.04, height * 0.05, logoSize);
 }
 
 function paintButton(button: HTMLButtonElement, colors: ButtonColors): void {
@@ -222,7 +238,6 @@ function paintButton(button: HTMLButtonElement, colors: ButtonColors): void {
 }
 
 export interface Overlay {
-  setMode(mode: Mode): void;
   stop(): void;
 }
 
@@ -231,9 +246,7 @@ export function startOverlay(
   doodles: HTMLCanvasElement,
   start: HTMLButtonElement,
   settings: HTMLButtonElement,
-  secret: HTMLButtonElement,
 ): Overlay {
-  let mode: Mode = "jensen";
   let variant = 0;
   let fontsReady = false;
   let stopped = false;
@@ -241,13 +254,10 @@ export function startOverlay(
 
   const draw = () => {
     if (!fontsReady || stopped) return;
-    const theme = THEMES[mode];
-    secret.hidden = mode !== "hackclub";
-    drawTitle(title, theme);
-    drawDoodles(doodles, theme, variant);
-    paintButton(start, theme.button);
+    drawTitle(title, THEME);
+    drawDoodles(doodles, variant);
+    paintButton(start, THEME.button);
     paintButton(settings, SETTINGS_BUTTON);
-    paintButton(secret, SECRET_BUTTON);
   };
 
   window.addEventListener("resize", draw);
@@ -257,16 +267,11 @@ export function startOverlay(
     draw();
     boilTimer = setInterval(() => {
       variant = (variant + 1) % BOIL_VARIANTS;
-      drawDoodles(doodles, THEMES[mode], variant);
+      drawDoodles(doodles, variant);
     }, BOIL_INTERVAL_MS);
   });
 
   return {
-    setMode(next) {
-      if (next === mode) return;
-      mode = next;
-      draw();
-    },
     stop() {
       stopped = true;
       clearInterval(boilTimer);
