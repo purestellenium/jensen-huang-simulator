@@ -2,6 +2,7 @@ export type TextSpeed = "slow" | "normal" | "fast" | "instant";
 
 export interface Settings {
   musicVolume: number;
+  sfxVolume: number;
   muted: boolean;
   textSpeed: TextSpeed;
   movingBackground: boolean;
@@ -11,8 +12,7 @@ export const TEXT_SPEEDS: readonly TextSpeed[] = ["slow", "normal", "fast", "ins
 export const VOLUME_STEP = 5;
 
 const STORAGE_KEY = "jensen-huang-simulator.settings";
-const DEFAULTS: Settings = { musicVolume: 60, muted: false, textSpeed: "normal", movingBackground: true };
-const SFX_GAIN = 0.7;
+const DEFAULTS: Settings = { musicVolume: 60, sfxVolume: 70, muted: false, textSpeed: "normal", movingBackground: true };
 const TEXT_INTERVAL_MS: Record<TextSpeed, number> = { slow: 40, normal: 22, fast: 8, instant: 0 };
 
 function pick<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
@@ -30,6 +30,7 @@ function load(): Settings {
     const parsed: Partial<Record<keyof Settings, unknown>> = JSON.parse(raw);
     return {
       musicVolume: volume(parsed.musicVolume, DEFAULTS.musicVolume),
+      sfxVolume: volume(parsed.sfxVolume, DEFAULTS.sfxVolume),
       muted: typeof parsed.muted === "boolean" ? parsed.muted : DEFAULTS.muted,
       textSpeed: pick(parsed.textSpeed, TEXT_SPEEDS, DEFAULTS.textSpeed),
       movingBackground: typeof parsed.movingBackground === "boolean" ? parsed.movingBackground : DEFAULTS.movingBackground,
@@ -64,8 +65,8 @@ export function musicGain(level: number, muted: boolean): number {
   return muted ? 0 : (level / 100) ** 1.5;
 }
 
-export function sfxGain(muted: boolean): number {
-  return muted ? 0 : SFX_GAIN;
+export function sfxGain(level: number, muted: boolean): number {
+  return muted ? 0 : level / 100;
 }
 
 export function textIntervalMs(speed: TextSpeed): number {

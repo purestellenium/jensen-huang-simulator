@@ -6,6 +6,7 @@ import {
   SPRITE_RESOLUTION_SCALE,
   crush,
   drawBadPhotoshopText,
+  TITLE_YELLOW,
   sizeCanvas,
   wrapText,
 } from "../pixel";
@@ -31,6 +32,8 @@ const TEXT_FACE = "Arial, sans-serif";
 const BANNER_COLOR = "#ff2a2a";
 const NEWSFLASH_SPRITE_SCALE = 0.85;
 const NEWSFLASH_SPRITE_LEVELS = 16;
+const SUMMARY_SCALE = 0.9;
+const SUMMARY_LEVELS = 12;
 const SCRIBBLE_INK = "#000000";
 const SCRIBBLE_PAPER = "#ffffff";
 const SCRIBBLE_LOOPS = 46;
@@ -47,6 +50,16 @@ const STAT_LABELS: [keyof Stats, string][] = [
   ["feds", STRINGS.hud.stats.feds],
   ["board", STRINGS.hud.stats.board],
 ];
+
+export interface SummaryData {
+  title: string;
+  affairsLabel: string;
+  affairs: number;
+  badge: string;
+  badgeHot: boolean;
+  cells: { label: string; value: string }[];
+  cause: string;
+}
 
 interface Scribble {
   points: [number, number][];
@@ -132,6 +145,7 @@ export class GameView {
   private line = "";
   private shown = 0;
   private lastPop = 0;
+  private summary: SummaryData | null = null;
   private newsflashing = false;
   private bannered = true;
   private highlighted: number | null = null;
@@ -206,13 +220,15 @@ export class GameView {
   updateStats(state: GameState): void {
     this.turn = state.turn;
     this.stats = { ...state.stats };
-    this.quarter = { ...state.quarter };
-    this.elapsed = state.turn - state.quarter.startTurn;
+    const closing = state.quarterResult !== null && state.closedQuarter !== null;
+    const shown = closing && state.closedQuarter ? state.closedQuarter : state.quarter;
+    this.quarter = { ...shown };
+    this.elapsed = closing ? QUARTER_LENGTH : state.turn - state.quarter.startTurn;
     const summary = STAT_LABELS.map(([key, label]) => `${label} ${formatStat(key, state.stats[key])}`).join(", ");
     const quarterSummary = STRINGS.hud.summaryQuarter(
-      state.quarter.number,
-      state.quarter.revenue,
-      state.quarter.target,
+      shown.number,
+      shown.revenue,
+      shown.target,
       Math.max(0, QUARTER_LENGTH - this.elapsed),
     );
     this.hudText.textContent = `${STRINGS.hud.summaryTurn(state.turn)} ${summary}. ${quarterSummary}`;
@@ -225,7 +241,8 @@ export class GameView {
     this.contact = contactId ? (CONTACTS[contactId] ?? null) : null;
     this.newsflashing = false;
     this.caption = "";
-    this.card.classList.remove("newsflash", "plain-portrait");
+    this.card.classList.remove("newsflash", "plain-portrait", "summary");
+    this.summary = null;
     if (contactId && !CONTACTS[contactId]) throw new Error(`Unknown contact "${contactId}"`);
     this.portrait.hidden = this.contact === null;
     this.card.classList.toggle("no-portrait", this.contact === null);
@@ -251,7 +268,19 @@ export class GameView {
     this.paintArt();
   }
 
+  async showSummary(data: SummaryData): Promise<void> {
+    this.line = "";
+    this.shown = 0;
+    this.spoken.textContent = `${data.title}. ${data.affairsLabel} ${data.affairs}. ${data.badge}. ${data.cells.map((cell) => `${cell.label} ${cell.value}`).join(". ")}. ${data.cause}`;
+    this.summary = data;
+    this.card.classList.add("summary");
+    this.clearChoices();
+    await this.waitForContinue();
+  }
+
   clearText(): void {
+    this.summary = null;
+    this.card.classList.remove("summary");
     this.line = "";
     this.shown = 0;
     this.spoken.textContent = "";
@@ -669,8 +698,92 @@ export class GameView {
     ctx.restore();
   }
 
+  private paintSummary(ctx: CanvasRenderingContext2D, rect: DOMRect, data: SummaryData): void {
+    const rc = rough.canvas(this.textArt);
+    const unit = Math.min(rect.width / 28, rect.height / 14);
+    const text = (value: string, x: number, y: number, size: number, fill: string, face = TITLE_FACE, weight = "") => {
+      drawBadPhotoshopText(ctx, value, x, y, size, `${weight}${size}px ${face}`, fill, "#000", null);
+    };
+
+    const titleSize = unit * 2.4;
+    text(data.title, 0, titleSize, titleSize, TITLE_YELLOW);
+
+    const bigSize = unit * 4.4;
+    const bigTop = titleSize + unit * 0.8;
+    ctx.font = `${bigSize}px ${TITLE_FACE}`;
+    const bigText = String(data.affairs);
+    const bigWidth = ctx.measureText(bigText).width;
+    text(bigText, 0, bigTop + bigSize * 0.85, bigSize, "#ff2a6a");
+    const labelSize = unit * 1.9;
+    const labelX = bigWidth + unit * 1.2;
+    text(data.affairsLabel, labelX, bigTop + bigSize * 0.5, labelSize, "#ff2a6a");
+
+    const badgeSize = unit * 1.6;
+    ctx.font = `${badgeSize}px ${TITLE_FACE}`;
+    const badgeWidth = ctx.measureText(data.badge).width + unit * 1.2;
+    const badgeY = bigTop + bigSize * 0.62;
+    ctx.save();
+    ctx.translate(labelX, badgeY);
+    ctx.rotate(data.badgeHot ? -0.05 : 0);
+    if (data.badgeHot) {
+      ctx.fillStyle = BANNER_COLOR;
+      ctx.fillRect(0, 0, badgeWidth, badgeSize * 1.4);
+    }
+    ctx.restore();
+    if (data.badgeHot) {
+      rc.rectangle(labelX, badgeY, badgeWidth, badgeSize * 1.4, {
+        seed: 52,
+        roughness: 1.4,
+        disableMultiStroke: true,
+        stroke: "#fff",
+        strokeWidth: 2.5,
+      });
+    }
+    text(data.badge, labelX + unit * 0.6, badgeY + badgeSize * 1.1, badgeSize, data.badgeHot ? "#fff" : "#9a9a9a");
+
+    const columns = rect.width < unit * 20 ? 2 : 3;
+    const rows = Math.ceil(data.cells.length / columns);
+    const gap = unit * 0.7;
+    const gridTop = bigTop + bigSize + unit * 0.8;
+    const causeSize = unit * 1.3;
+    const gridBottom = rect.height - causeSize - unit * 1.2;
+    const cellWidth = (rect.width - gap * (columns - 1)) / columns;
+    const cellHeight = Math.min(unit * 6, (gridBottom - gridTop - gap * (rows - 1)) / rows);
+    data.cells.forEach((cell, index) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      const x = column * (cellWidth + gap);
+      const y = gridTop + row * (cellHeight + gap);
+      rc.rectangle(x + 2, y + 2, cellWidth - 4, cellHeight - 4, {
+        seed: 60 + index,
+        roughness: 1.6,
+        bowing: 2,
+        disableMultiStroke: true,
+        preserveVertices: true,
+        stroke: "#fff",
+        strokeWidth: 3,
+      });
+      const smallSize = cellHeight * 0.32;
+      text(cell.label, x + unit * 0.7, y + cellHeight * 0.38, smallSize, "#c8c8c8");
+      let valueSize = cellHeight * 0.52;
+      ctx.font = `${valueSize}px ${TITLE_FACE}`;
+      const room = cellWidth - unit * 1.4;
+      const natural = ctx.measureText(cell.value).width;
+      if (natural > room) valueSize *= room / natural;
+      text(cell.value, x + unit * 0.7, y + cellHeight * 0.86, valueSize, "#fff");
+    });
+
+    text(data.cause, 0, rect.height - unit * 0.3, causeSize, "#fff", TEXT_FACE, "bold ");
+  }
+
   private paintText(): void {
     const rect = this.message.getBoundingClientRect();
+    if (this.summary) {
+      const summaryCtx = sizeCanvas(this.textArt, rect.width, rect.height, SUMMARY_SCALE);
+      this.paintSummary(summaryCtx, rect, this.summary);
+      crush(summaryCtx, SUMMARY_LEVELS);
+      return;
+    }
     const ctx = sizeCanvas(this.textArt, rect.width, rect.height);
     const size = parseFloat(getComputedStyle(this.message).fontSize);
     const font = `bold ${size}px ${TEXT_FACE}`;

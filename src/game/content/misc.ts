@@ -7,7 +7,7 @@ const stockPops: Scenario[] = S.stockPop.texts.map(
   (text, index): Scenario => ({
     id: `stock-pop-${index + 1}`,
     contact: "market",
-    weight: 1.2,
+    weight: 2,
     text,
     choices: [
       {
@@ -28,7 +28,7 @@ const jackets: Scenario[] = S.jacket.texts.map(
   (text, index): Scenario => ({
     id: `jacket-${index + 1}`,
     contact: "jacket",
-    weight: 0.8,
+    weight: 1.4,
     text,
     choices: [
       {

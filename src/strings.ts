@@ -52,6 +52,8 @@ export const STRINGS = {
     back: "Back",
     music: (volume: number) => `Music: ${volume}%`,
     musicName: "Music volume",
+    sfx: (volume: number) => `Sound effects: ${volume}%`,
+    sfxName: "Sound effects volume",
     mute: "Mute",
     unmute: "Unmute",
     textSpeed: "Text speed",
@@ -86,16 +88,28 @@ export const STRINGS = {
     affairs: "Affairs. This is your score, so rack them up. Just don't get caught, or the board will oust you.",
     feds: "Wanted level. How much the FBI suspects you. Five stars and you are arrested. Only money makes them forget.",
     earnings: "Quarterly earnings. Earn enough before the six notches run out. Miss two quarters in a row and you are fired.",
-    board: "Board confidence. Keep it above zero or you are out.",
+    board: "Board trust level. Keep it above zero or you are out.",
+  },
+
+  hints: {
+    pallet: "You decide not to think about where those pallets went.",
+    envelope: "An unmarked car has been parked outside your house twice this week.",
+    secrets: "Your lawyer has started asking about your travel receipts.",
+    megaspeed: "You get the feeling this is not the last you will hear about Megaspeed.",
+    gossip: "Someone in the lobby looked at you for slightly too long.",
+    hr: "Somewhere in the building, a keycard log has been updated.",
+    exec: "You notice the phone log. You decide that you did not.",
   },
 
   summary: {
     title: "FINAL STATS",
-    turns: (count: number) => `Rounds played: ${count}`,
-    quarter: (number: number) => `Quarter reached: Q${number}`,
-    affairs: (count: number) => `Affairs: ${count}`,
-    moneyBoard: (money: string, board: number) => `Money: ${money}   Board: ${board}`,
-    wanted: (stars: string) => `Wanted: ${stars}`,
+    affairs: "AFFAIRS",
+    best: (count: number) => `BEST: ${count}`,
+    newBest: "NEW BEST!",
+    labels: { rounds: "ROUNDS", quarter: "QUARTER", money: "MONEY", wanted: "WANTED", board: "BOARD TRUST" },
+    quarterValue: (number: number) => `Q${number}`,
+    cause: (text: string) => `Cause: ${text}`,
+    causes: { feds: "Arrested by the FBI", board: "Fired by the board", scandal: "Ousted over an affair" },
   },
 
   identities: {
@@ -173,7 +187,7 @@ export const STRINGS = {
       },
       fake: {
         label: "Give them last generation's",
-        fooled: "They thank you warmly. It will take them a year to notice.",
+        fooled: "They thank you warmly, and pay you the full amount. It will take them a year to notice.",
         caught: "They notice in about four minutes. This is now a trust issue.",
       },
       tell: {
@@ -327,6 +341,43 @@ export const STRINGS = {
         result: "Swiped left. Somewhere, a very patient intelligence agency sighs.",
       },
     },
+    matches: {
+      texts: [
+        "Dana wants to match! Her bio says: \"Seeking a man with great jackets and no commitments.\"",
+        "Priya wants to match! Her bio says: \"I don't care about the stock price. (I do.)\"",
+        "Camille wants to match! Her bio says: \"Fluent in CUDA. Fluent in other things.\"",
+      ],
+      yes: {
+        label: "Swipe right",
+        result: "It's a match. You tell yourself it is market research.",
+      },
+      no: {
+        label: "Swipe left",
+        result: "You swipe left and put the phone away. You feel like a slightly better CEO for about nine minutes.",
+      },
+    },
+    afterparty: {
+      text: "At the keynote after-party, a woman from the front row says she has \"a lot of questions about Blackwell.\"",
+      yes: {
+        label: "Answer them at the bar",
+        result: "The questions last until the bar closes. Then the questions move to the hotel room.",
+      },
+      no: {
+        label: "Send her to the Q&A",
+        result: "She asks her questions in public, with the lights on. They are, disappointingly, about Blackwell.",
+      },
+    },
+    podcast: {
+      text: "A podcast host lingers after the interview. \"Can I ask you a few things off the record?\"",
+      yes: {
+        label: "Go off the record",
+        result: "The recording stopped an hour ago. Her phone, you notice, did not.",
+      },
+      no: {
+        label: "Stay on the record",
+        result: "You stay on the record. The episode does very well. It has a lot of dead air at the end.",
+      },
+    },
     trip: {
       text: "On a business trip, you and a senior VP get a little closer than expected.",
       game: {
@@ -393,6 +444,41 @@ export const STRINGS = {
         label: "Cook the numbers",
         slides: "The numbers look beautiful. Nobody checks. It is a very good spreadsheet.",
         caught: "An analyst notices a number that is a little too round. A second analyst notices too.",
+      },
+    },
+    earningsFired: {
+      text: "Quarterly earnings. You missed the target for the second quarter in a row. The board has lost patience, and has called an emergency meeting.",
+      face: {
+        label: "Face the board",
+        result: "They thank you for your service. Security is already waiting outside.",
+      },
+    },
+    closeCall: {
+      texts: [
+        "An unknown number texts you: \"Nice jacket. I know where you were last Thursday.\"",
+        "A screenshot arrives from an unknown number. It is a very familiar hotel receipt.",
+        "Your assistant says someone has been asking questions about your calendar. Your assistant sounds worried.",
+      ],
+      pay: {
+        label: "Pay to make it go away",
+        result: "A fixer takes the money and the problem. You never learn which one was bigger.",
+      },
+      ignore: {
+        label: "Ignore it",
+        blows: "Nothing happens. Somehow, nothing happening is worse.",
+        board: "It does not leak. It does reach one board member, who now sits closer to the door.",
+        scandal: "It leaks. All of it, with timestamps.",
+      },
+    },
+    charm: {
+      text: "The board invites you to an informal dinner. \"No agenda,\" says the invite, which means there is an agenda.",
+      pay: {
+        label: "Pick up the check",
+        result: "You pick up the check, the wine list, and the second wine list. The board says it has never felt so understood.",
+      },
+      skip: {
+        label: "Skip it",
+        result: "You send a very warm apology. The board writes it down.",
       },
     },
     callMild: {

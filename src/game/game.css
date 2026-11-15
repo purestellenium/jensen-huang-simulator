@@ -87,6 +87,11 @@
   margin-bottom: 0;
 }
 
+.card.summary .message {
+  min-height: clamp(19rem, 50vh, 28rem);
+  cursor: default;
+}
+
 .portrait[hidden] {
   display: none;
 }

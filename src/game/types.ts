@@ -34,6 +34,7 @@ export interface Effect {
 
 export interface Outcome {
   result: string;
+  hint?: string;
   effects?: Effect;
   next?: string;
   loss?: LossKind;
@@ -76,7 +77,7 @@ export interface QuarterState {
   missStreak: number;
 }
 
-export type QuarterResult = "hit" | "miss";
+export type QuarterResult = "hit" | "miss" | "fired";
 
 export interface ScheduledEntry {
   id: string;
@@ -93,5 +94,6 @@ export interface GameState {
   scheduled: ScheduledEntry[];
   quarter: QuarterState;
   quarterResult: QuarterResult | null;
+  closedQuarter: QuarterState | null;
   loss: LossKind | null;
 }

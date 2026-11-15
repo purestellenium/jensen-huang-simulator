@@ -1,5 +1,6 @@
 import { STRINGS } from "../strings";
 import {
+  EARNINGS_FIRED_ID,
   EARNINGS_HIT_ID,
   EARNINGS_MISS_ID,
   PASSIVE_INCOME,
@@ -43,6 +44,7 @@ export function newGame(): GameState {
     scheduled: [],
     quarter: newQuarter(1, 1),
     quarterResult: null,
+    closedQuarter: null,
     loss: null,
   };
 }
@@ -106,7 +108,8 @@ export function drawScenario(state: GameState, scenarios: Scenario[], rng: Rng =
   let scenario: Scenario | undefined;
 
   if (state.quarterResult) {
-    const id = state.quarterResult === "hit" ? EARNINGS_HIT_ID : EARNINGS_MISS_ID;
+    const id =
+      state.quarterResult === "hit" ? EARNINGS_HIT_ID : state.quarterResult === "fired" ? EARNINGS_FIRED_ID : EARNINGS_MISS_ID;
     state.quarterResult = null;
     scenario = scenarios.find((candidate) => candidate.id === id);
   }
@@ -140,9 +143,10 @@ function applyEffect(state: GameState, effect: Effect = {}, rng: Rng): void {
     const next = round1(state.stats[key] + delta);
     state.stats[key] = METER_KEYS.includes(key) ? Math.min(100, Math.max(0, next)) : Math.max(0, next);
     if (key === "money" && delta > 0) state.quarter.revenue = round1(state.quarter.revenue + delta);
+    if (key === "affairs" && delta > 0) state.counters.exposure = (state.counters.exposure ?? 0) + delta;
   }
   for (const [name, delta] of Object.entries(effect.counters ?? {})) {
-    state.counters[name] = (state.counters[name] ?? 0) + delta;
+    state.counters[name] = Math.max(0, (state.counters[name] ?? 0) + delta);
   }
   for (const flag of effect.setFlags ?? []) {
     state.flags.add(flag);
@@ -197,12 +201,12 @@ function expireFlags(state: GameState): void {
   }
 }
 
-function endTurn(state: GameState): void {
+function endTurn(state: GameState, rng: Rng): void {
   state.stats.money = round1(state.stats.money + PASSIVE_INCOME);
   state.quarter.revenue = round1(state.quarter.revenue + PASSIVE_INCOME);
   state.turn += 1;
   expireFlags(state);
-  if (state.turn - state.quarter.startTurn >= QUARTER_LENGTH) closeQuarter(state);
+  if (state.turn - state.quarter.startTurn >= QUARTER_LENGTH) closeQuarter(state, rng);
 }
 
 export function resolveChoice(state: GameState, choice: Choice, rng: Rng = Math.random): Outcome {
@@ -210,7 +214,7 @@ export function resolveChoice(state: GameState, choice: Choice, rng: Rng = Math.
   const outcome = outcomeOf(choice, rng);
   applyEffect(state, outcome.effects, rng);
   if (outcome.next) scheduleScenario(state, { id: outcome.next, after: 1 }, rng);
-  endTurn(state);
+  endTurn(state, rng);
   state.loss = outcome.loss ?? state.loss ?? checkLoss(state);
   return outcome;
 }

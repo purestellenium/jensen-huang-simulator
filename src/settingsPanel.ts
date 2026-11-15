@@ -1,5 +1,6 @@
 import rough from "roughjs";
 import { NVIDIA_GREEN, TITLE_YELLOW, crush, drawBadPhotoshopText, sizeCanvas } from "./pixel";
+import { playSound } from "./audio";
 import { TEXT_SPEEDS, VOLUME_STEP, getSettings, nextValue, onSettingsChange, updateSettings } from "./settings";
 import { outlineButtonArt } from "./sketch";
 import { STRINGS } from "./strings";
@@ -28,12 +29,32 @@ const ROWS: Row[] = [
   },
 ];
 
+type VolumeKey = "musicVolume" | "sfxVolume";
+
+interface SliderSpec {
+  key: VolumeKey;
+  name: string;
+  label: (volume: number) => string;
+  seed: number;
+  preview?: () => void;
+}
+
+interface SliderUi {
+  spec: SliderSpec;
+  slider: HTMLElement;
+  art: HTMLCanvasElement;
+}
+
+const SLIDERS: SliderSpec[] = [
+  { key: "musicVolume", name: S.musicName, label: S.music, seed: 9 },
+  { key: "sfxVolume", name: S.sfxName, label: S.sfx, seed: 12, preview: () => playSound("pop") },
+];
+
 interface Built {
   panel: HTMLElement;
   card: HTMLElement;
   art: HTMLCanvasElement;
-  slider: HTMLElement;
-  sliderArt: HTMLCanvasElement;
+  sliders: SliderUi[];
   mute: HTMLButtonElement;
   rows: { button: HTMLButtonElement; row: Row }[];
   back: HTMLButtonElement;
@@ -56,22 +77,23 @@ function volumeAt(slider: HTMLElement, clientX: number): number {
   return Math.round((Math.min(1, Math.max(0, ratio)) * 100) / VOLUME_STEP) * VOLUME_STEP;
 }
 
-function setVolume(volume: number): void {
+function setVolume(spec: SliderSpec, volume: number): void {
   const level = Math.min(100, Math.max(0, volume));
   const current = getSettings();
-  if (level === current.musicVolume && !current.muted) return;
-  updateSettings({ musicVolume: level, muted: false });
+  if (level === current[spec.key] && !current.muted) return;
+  updateSettings({ [spec.key]: level, muted: false });
+  spec.preview?.();
 }
 
-function wireSlider(slider: HTMLElement): void {
+function wireSlider(spec: SliderSpec, slider: HTMLElement): void {
   let dragging = false;
   slider.addEventListener("pointerdown", (event) => {
     dragging = true;
     slider.setPointerCapture(event.pointerId);
-    setVolume(volumeAt(slider, event.clientX));
+    setVolume(spec, volumeAt(slider, event.clientX));
   });
   slider.addEventListener("pointermove", (event) => {
-    if (dragging) setVolume(volumeAt(slider, event.clientX));
+    if (dragging) setVolume(spec, volumeAt(slider, event.clientX));
   });
   const release = () => {
     dragging = false;
@@ -79,7 +101,7 @@ function wireSlider(slider: HTMLElement): void {
   slider.addEventListener("pointerup", release);
   slider.addEventListener("pointercancel", release);
   slider.addEventListener("keydown", (event) => {
-    const current = getSettings().musicVolume;
+    const current = getSettings()[spec.key];
     const targets: Record<string, number> = {
       ArrowLeft: current - VOLUME_STEP,
       ArrowDown: current - VOLUME_STEP,
@@ -91,7 +113,7 @@ function wireSlider(slider: HTMLElement): void {
     const next = targets[event.key];
     if (next === undefined) return;
     event.preventDefault();
-    setVolume(next);
+    setVolume(spec, next);
   });
 }
 
@@ -110,23 +132,28 @@ function build(): Built {
   art.setAttribute("aria-hidden", "true");
   card.append(art);
 
+  const sliders = SLIDERS.map((spec): SliderUi => {
+    const slider = document.createElement("div");
+    slider.className = "settings-slider";
+    slider.tabIndex = 0;
+    slider.setAttribute("role", "slider");
+    slider.setAttribute("aria-label", spec.name);
+    slider.setAttribute("aria-valuemin", "0");
+    slider.setAttribute("aria-valuemax", "100");
+    const art = document.createElement("canvas");
+    art.className = "settings-art";
+    art.setAttribute("aria-hidden", "true");
+    slider.append(art);
+    return { spec, slider, art };
+  });
+
   const music = document.createElement("div");
   music.className = "settings-music";
-  const slider = document.createElement("div");
-  slider.className = "settings-slider";
-  slider.tabIndex = 0;
-  slider.setAttribute("role", "slider");
-  slider.setAttribute("aria-label", S.musicName);
-  slider.setAttribute("aria-valuemin", "0");
-  slider.setAttribute("aria-valuemax", "100");
-  const sliderArt = document.createElement("canvas");
-  sliderArt.className = "settings-art";
-  sliderArt.setAttribute("aria-hidden", "true");
-  slider.append(sliderArt);
-  music.append(slider);
+  music.append(sliders[0]!.slider);
   const mute = option(music);
   mute.classList.add("settings-mute");
   card.append(music);
+  card.append(sliders[1]!.slider);
 
   const rows = ROWS.map((row) => ({ button: option(card), row }));
   const back = option(card);
@@ -135,7 +162,7 @@ function build(): Built {
   panel.append(card);
   document.body.append(panel);
 
-  wireSlider(slider);
+  for (const { spec, slider } of sliders) wireSlider(spec, slider);
   mute.addEventListener("click", () => updateSettings({ muted: !getSettings().muted }));
   for (const { button, row } of rows) {
     button.addEventListener("click", () => row.press());
@@ -154,7 +181,7 @@ function build(): Built {
     if (!panel.hidden) paintControls();
   });
 
-  return { panel, card, art, slider, sliderArt, mute, rows, back };
+  return { panel, card, art, sliders, mute, rows, back };
 }
 
 function paintCard(): void {
@@ -181,23 +208,22 @@ function paintCard(): void {
   crush(ctx);
 }
 
-function paintSlider(): void {
-  if (!built) return;
-  const { slider, sliderArt } = built;
-  const { musicVolume, muted } = getSettings();
+function paintSlider({ spec, slider, art }: SliderUi): void {
+  const volume = getSettings()[spec.key];
+  const { muted } = getSettings();
   const rect = slider.getBoundingClientRect();
-  const ctx = sizeCanvas(sliderArt, rect.width, rect.height);
-  const rc = rough.canvas(sliderArt);
+  const ctx = sizeCanvas(art, rect.width, rect.height);
+  const rc = rough.canvas(art);
   const width = rect.width - SLIDER_INSET * 2;
   const height = rect.height - SLIDER_INSET * 2;
-  const filled = (width * musicVolume) / 100;
+  const filled = (width * volume) / 100;
 
   ctx.fillStyle = "#000";
   ctx.fillRect(SLIDER_INSET, SLIDER_INSET, width, height);
   ctx.fillStyle = muted ? "#555" : NVIDIA_GREEN;
   ctx.fillRect(SLIDER_INSET, SLIDER_INSET, filled, height);
   rc.rectangle(SLIDER_INSET, SLIDER_INSET, width, height, {
-    seed: 9,
+    seed: spec.seed,
     roughness: 1.8,
     bowing: 2.5,
     disableMultiStroke: true,
@@ -215,11 +241,11 @@ function paintSlider(): void {
   const style = getComputedStyle(slider);
   const size = parseFloat(style.fontSize);
   const font = `bold ${size}px ${TEXT_FACE}`;
-  drawBadPhotoshopText(ctx, S.music(musicVolume), SLIDER_INSET + 16, rect.height / 2 + size * 0.35, size, font, "#fff", "#000", null);
+  drawBadPhotoshopText(ctx, spec.label(volume), SLIDER_INSET + 16, rect.height / 2 + size * 0.35, size, font, "#fff", "#000", null);
   crush(ctx);
 
-  slider.setAttribute("aria-valuenow", String(musicVolume));
-  slider.setAttribute("aria-valuetext", muted ? `${S.music(musicVolume)}, ${S.unmute}` : S.music(musicVolume));
+  slider.setAttribute("aria-valuenow", String(volume));
+  slider.setAttribute("aria-valuetext", muted ? `${spec.label(volume)}, ${S.unmute}` : spec.label(volume));
 }
 
 function paintButton(button: HTMLButtonElement, seed: number, color = "#ffffff"): void {
@@ -244,7 +270,7 @@ function paintControls(): void {
   const { muted } = getSettings();
   built.mute.textContent = muted ? S.unmute : S.mute;
   paintButton(built.mute, 20, muted ? MUTED_COLOR : "#ffffff");
-  paintSlider();
+  built.sliders.forEach(paintSlider);
   built.rows.forEach(({ button, row }, index) => {
     button.textContent = row.label();
     paintButton(button, index + 1);
@@ -266,7 +292,7 @@ export function openSettings(from: HTMLElement): void {
   opener = from;
   built.panel.hidden = false;
   paint();
-  built.slider.focus();
+  built.sliders[0]!.slider.focus();
 }
 
 export function closeSettings(): void {

@@ -19,6 +19,9 @@ export const CONTACTS: Record<string, Contact> = {
   hr: { emoji: "📋", color: "#8492a6" },
   shareholder: { emoji: "🎤", color: "#f1c40f" },
   market: { emoji: "📈", color: "#76b900" },
+  anon: { emoji: "❓", color: "#8492a6" },
+  fan: { emoji: "🎟️", color: "#ec3750" },
+  host: { emoji: "🎙️", color: "#a633d6" },
   jacket: { emoji: "🧥", color: "#76b900" },
 };
 
@@ -28,7 +31,7 @@ export const ENDINGS: Record<LossKind, { headline: string; story: string }> = {
   scandal: STRINGS.endings.scandal,
 };
 
-const JACKET_STEP = 0.3;
+const JACKET_STEP = 0.6;
 const JACKET_CAP = 4;
 const HOSTILE_MULTIPLIER = 2;
 

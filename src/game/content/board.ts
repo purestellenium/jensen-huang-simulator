@@ -1,5 +1,5 @@
 import { STRINGS } from "../../strings";
-import { EARNINGS_HIT_ID, EARNINGS_MISS_ID } from "../quarter";
+import { EARNINGS_FIRED_ID, EARNINGS_HIT_ID, EARNINGS_MISS_ID } from "../quarter";
 import type { Scenario } from "../types";
 
 const S = STRINGS.scenarios;
@@ -13,6 +13,40 @@ const earningsHit: Scenario = {
     {
       label: S.earningsHit.bow.label,
       result: S.earningsHit.bow.result,
+    },
+  ],
+};
+
+const charm: Scenario = {
+  id: "board-charm",
+  contact: "board",
+  weight: (state) => (state.stats.board <= 60 ? 2.5 : 0.8),
+  text: S.charm.text,
+  choices: [
+    {
+      label: S.charm.skip.label,
+      tone: "no",
+      result: S.charm.skip.result,
+    },
+    {
+      label: S.charm.pay.label,
+      requires: [{ stat: "money", min: 10 }],
+      result: S.charm.pay.result,
+      effects: { stats: { money: -10, board: 15 } },
+    },
+  ],
+};
+
+const earningsFired: Scenario = {
+  id: EARNINGS_FIRED_ID,
+  contact: "board",
+  scheduledOnly: true,
+  text: S.earningsFired.text,
+  choices: [
+    {
+      label: S.earningsFired.face.label,
+      result: S.earningsFired.face.result,
+      loss: "board",
     },
   ],
 };
@@ -134,7 +168,7 @@ const vpGossip: Scenario = {
     {
       label: S.vpGossip.deny.label,
       outcomes: [
-        { result: S.vpGossip.deny.believed, effects: { stats: { board: -5 } } },
+        { weight: 3, result: S.vpGossip.deny.believed, effects: { stats: { board: -5 } } },
         { result: S.vpGossip.deny.scandal, loss: "scandal" },
       ],
     },
@@ -163,17 +197,20 @@ const megaspeed: Scenario = {
     {
       label: S.megaspeed.silent.label,
       result: S.megaspeed.silent.result,
+      hint: STRINGS.hints.megaspeed,
       effects: { stats: { board: -10 }, schedule: [{ id: "fbi-megaspeed", after: 1 }] },
     },
     {
       label: S.megaspeed.blame.label,
       result: S.megaspeed.blame.result,
+      hint: STRINGS.hints.megaspeed,
       effects: { stats: { feds: 10 }, schedule: [{ id: "fbi-megaspeed", after: 1 }] },
     },
     {
       label: S.megaspeed.investigate.label,
       requires: [{ stat: "money", min: 10 }],
       result: S.megaspeed.investigate.result,
+      hint: STRINGS.hints.megaspeed,
       effects: { stats: { money: -10, board: 5 }, schedule: [{ id: "fbi-megaspeed", after: 1 }] },
     },
   ],
@@ -210,6 +247,8 @@ const qa: Scenario = {
 export const board: Scenario[] = [
   earningsHit,
   earningsMiss,
+  earningsFired,
+  charm,
   callMild,
   callUrgent,
   blackwell,

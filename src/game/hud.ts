@@ -75,11 +75,13 @@ function meter(
   text: string,
   fill: (width: number, height: number) => void,
   rightText?: string,
+  lift = 0,
+  noLoops = false,
 ): void {
   const { rc, ctx, seed } = pen;
   const width = s * pen.meterWidth;
   const height = s * 0.62;
-  const top = (s - height) / 2;
+  const top = (s - height) / 2 - s * lift;
   const filled = (width * Math.min(100, Math.max(0, value))) / 100;
   if (filled > 0) {
     ctx.save();
@@ -87,7 +89,15 @@ function meter(
     fill(filled, height);
     ctx.restore();
   }
-  rc.rectangle(x, top, width, height, { seed, roughness: 2, bowing: 2, stroke: "#fff", strokeWidth: 2.5 });
+  rc.rectangle(
+    x,
+    top,
+    width,
+    height,
+    noLoops
+      ? { seed, roughness: 1.8, bowing: 2, disableMultiStroke: true, preserveVertices: true, stroke: "#fff", strokeWidth: 2.5 }
+      : { seed, roughness: 2, bowing: 2, stroke: "#fff", strokeWidth: 2.5 },
+  );
   const edge = s * 0.18;
   const room = width - edge * 2;
   const split = rightText ? s * 0.25 : 0;
@@ -241,19 +251,25 @@ const earnings: Chip = (pen, s, _stats, measureOnly) => {
       });
     },
     STRINGS.hud.progressLabel(quarter.revenue, quarter.target),
+    EARNINGS_METER_LIFT,
+    true,
   );
 
   const meterWidth = s * pen.meterWidth;
-  const gap = s * 0.05;
+  const gap = s * 0.08;
   const notch = (meterWidth - gap * (QUARTER_LENGTH - 1)) / QUARTER_LENGTH;
+  const notchTop = s * 0.84;
+  const notchHeight = s * 0.1;
   for (let index = 0; index < QUARTER_LENGTH; index++) {
     ctx.fillStyle = index < elapsed ? "#fff" : "#555";
-    ctx.fillRect(left + index * (notch + gap), s * 0.86, notch, s * 0.11);
+    ctx.fillRect(Math.round(left + index * (notch + gap)), Math.round(notchTop), Math.round(notch), Math.round(notchHeight));
   }
 
   if (tag) label(ctx, tag, left + meterWidth + s * 0.1, s * 0.74, tagSize, SIREN_RED, false);
   return width;
 };
+
+const EARNINGS_METER_LIFT = 0.08;
 
 const CHIPS: Chip[] = [money, affairs, feds, earnings, board];
 const CHIP_GAP = 0.55;

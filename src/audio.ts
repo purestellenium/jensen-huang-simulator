@@ -18,6 +18,8 @@ let buffer: AudioBuffer | null = null;
 const sounds: Partial<Record<SoundName, AudioBuffer>> = {};
 let nextStart = 0;
 let begun = false;
+let musicRequested = false;
+let musicPlaying = false;
 
 async function decode(audio: AudioContext, url: string): Promise<AudioBuffer | null> {
   try {
@@ -31,9 +33,9 @@ async function decode(audio: AudioContext, url: string): Promise<AudioBuffer | n
 
 function applyLevels(): void {
   if (!context || !music || !effects) return;
-  const { musicVolume, muted } = getSettings();
+  const { musicVolume, sfxVolume, muted } = getSettings();
   music.gain.setTargetAtTime(musicGain(musicVolume, muted), context.currentTime, LEVEL_SMOOTHING);
-  effects.gain.setTargetAtTime(sfxGain(muted), context.currentTime, LEVEL_SMOOTHING);
+  effects.gain.setTargetAtTime(sfxGain(sfxVolume, muted), context.currentTime, LEVEL_SMOOTHING);
 }
 
 function scheduleLoop(startTime: number): void {
@@ -67,19 +69,31 @@ async function start(): Promise<void> {
   effects = audio.createGain();
   music.connect(audio.destination);
   effects.connect(audio.destination);
-  const { musicVolume, muted } = getSettings();
+  const { musicVolume, sfxVolume, muted } = getSettings();
   music.gain.value = musicGain(musicVolume, muted);
-  effects.gain.value = sfxGain(muted);
+  effects.gain.value = sfxGain(sfxVolume, muted);
   onSettingsChange(applyLevels);
 
   const [track, pop] = await Promise.all([decode(audio, BGM_URL), decode(audio, SOUND_URLS.pop)]);
   if (pop) sounds.pop = pop;
   if (!track) return;
   buffer = track;
-  void audio.resume();
-  nextStart = audio.currentTime + 0.1;
+  beginMusic();
+}
+
+function beginMusic(): void {
+  if (!context || !buffer || !musicRequested || musicPlaying) return;
+  musicPlaying = true;
+  void context.resume();
+  nextStart = context.currentTime + 0.1;
   topUp();
   setInterval(topUp, TOP_UP_MS);
+}
+
+export function startMusic(): void {
+  musicRequested = true;
+  unlockMusic();
+  beginMusic();
 }
 
 export function unlockMusic(): void {

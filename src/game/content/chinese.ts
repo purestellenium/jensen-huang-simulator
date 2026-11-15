@@ -24,7 +24,7 @@ const buyers: Scenario[] = buyerTiers.flatMap((tier, index) =>
       app: "wechat",
       contact: "ling",
       text: S.buyer.text(name, buyerUnits[index as 0 | 1 | 2]),
-      weight: 2,
+      weight: 3,
       requires: tier.requires,
       choices: [
         {
@@ -36,6 +36,7 @@ const buyers: Scenario[] = buyerTiers.flatMap((tier, index) =>
           label: S.buyer.accept.label,
           tone: "yes",
           result: tier.result,
+          hint: STRINGS.hints.pallet,
           effects: {
             stats: { money: tier.money, feds: 20 },
             counters: { sales: 1, evidence: 1 },
@@ -60,7 +61,7 @@ const envelopes: Scenario[] = envelopeTiers.map(
     app: "wechat",
     contact: "ling",
     text: tier.text,
-    weight: 2,
+    weight: 5,
     requires: tier.requires,
     choices: [
       {
@@ -72,6 +73,7 @@ const envelopes: Scenario[] = envelopeTiers.map(
         label: S.envelope.accept.label,
         tone: "yes",
         result: tier.result,
+        hint: STRINGS.hints.envelope,
         effects: {
           stats: { money: tier.money },
           counters: { envelopes: 1, evidence: 1 },
@@ -130,11 +132,11 @@ const architecture: Scenario = {
       outcomes: [
         {
           result: S.architecture.fake.fooled,
-          effects: { stats: { money: 10 }, counters: { evidence: 1 } },
+          effects: { stats: { money: 25 }, counters: { evidence: 1 } },
         },
         {
           result: S.architecture.fake.caught,
-          effects: { stats: { feds: 40, board: -15 } },
+          effects: { stats: { board: -15 } },
         },
       ],
     },
@@ -142,6 +144,7 @@ const architecture: Scenario = {
       label: S.architecture.tell.label,
       tone: "yes",
       result: S.architecture.tell.result,
+      hint: STRINGS.hints.secrets,
       effects: {
         stats: { money: 25, feds: 20 },
         counters: { evidence: 2 },
@@ -157,8 +160,8 @@ const dinner: Scenario = {
   contact: "ling",
   text: S.dinner.text,
   once: true,
-  weight: 6,
-  requires: [{ counter: "envelopes", min: 3 }],
+  weight: 12,
+  requires: [{ counter: "envelopes", min: 2 }],
   choices: [
     {
       label: S.dinner.decline.label,

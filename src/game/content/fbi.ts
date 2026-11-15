@@ -70,13 +70,13 @@ const datingSubpoena: Scenario = {
   contact: "fbi",
   once: true,
   weight: 4,
-  requires: [{ stat: "affairs", min: 4 }],
+  requires: [{ stat: "affairs", min: 3 }],
   text: S.fbiDatingSubpoena.text,
   choices: [
     {
       label: S.fbiDatingSubpoena.comply.label,
       outcomes: [
-        { result: S.fbiDatingSubpoena.comply.quiet, effects: { stats: { board: -10 } } },
+        { weight: 3, result: S.fbiDatingSubpoena.comply.quiet, effects: { stats: { board: -10 } } },
         { result: S.fbiDatingSubpoena.comply.leaked, loss: "scandal" },
       ],
     },

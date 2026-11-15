@@ -4,7 +4,7 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { unlockMusic } from "./audio";
+import { startMusic, unlockMusic } from "./audio";
 import { startOverlay, type Mode } from "./overlay";
 import { openSettings } from "./settingsPanel";
 import { startGame } from "./game/game";
@@ -244,6 +244,7 @@ renderer.setAnimationLoop((time) => {
 });
 
 startButton.addEventListener("click", () => {
+  startMusic();
   onTitleScreen = false;
   ui.stop();
   renderer.setAnimationLoop(null);
