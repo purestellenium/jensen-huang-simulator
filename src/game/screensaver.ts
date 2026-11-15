@@ -1,5 +1,6 @@
 import rough from "roughjs";
 import { NVIDIA_GREEN, crush, sizeCanvas } from "../pixel";
+import { getSettings, onSettingsChange } from "../settings";
 
 const SPRITE_WIDTH = 170;
 const SPRITE_HEIGHT = 136;
@@ -114,14 +115,23 @@ export class Screensaver {
   private readonly sprites: Record<FlyerKind, HTMLCanvasElement[]> = { gpu: drawFrames("gpu"), cheese: drawFrames("cheese") };
   private kind: FlyerKind = "gpu";
   private dirty = true;
-  private readonly still = window.matchMedia("(prefers-reduced-motion: reduce)");
+  private readonly reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  private animated = getSettings().movingBackground;
   private flyers: Flyer[] = [];
   private width = 0;
   private height = 0;
   private last = 0;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
+    onSettingsChange(() => {
+      this.animated = getSettings().movingBackground;
+      this.dirty = true;
+    });
     requestAnimationFrame((time) => this.loop(time));
+  }
+
+  private get still(): boolean {
+    return this.reducedMotion.matches || !this.animated;
   }
 
   setKind(kind: FlyerKind): void {
@@ -159,10 +169,10 @@ export class Screensaver {
     const { width, height } = this.canvas.getBoundingClientRect();
     const resized = width !== this.width || height !== this.height;
     if (resized) this.resize(width, height);
-    if (this.still.matches && !resized && !this.dirty) return;
+    if (this.still && !resized && !this.dirty) return;
     this.dirty = false;
 
-    if (!this.still.matches) {
+    if (!this.still) {
       for (const flyer of this.flyers) {
         flyer.x -= flyer.speed * 2;
         flyer.y += flyer.speed;

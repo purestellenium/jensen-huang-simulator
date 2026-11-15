@@ -153,6 +153,7 @@ const THEMES: Record<Mode, Theme> = {
 };
 
 const SECRET_BUTTON: ButtonColors = { fill: HC_PURPLE, ink: "#fff", outline: "#000" };
+const SETTINGS_BUTTON: ButtonColors = { fill: "#9a9a9a", ink: "#000", outline: "#fff" };
 
 function drawTitle(canvas: HTMLCanvasElement, theme: Theme): void {
   const ctx = context2d(canvas);
@@ -229,6 +230,7 @@ export function startOverlay(
   title: HTMLCanvasElement,
   doodles: HTMLCanvasElement,
   start: HTMLButtonElement,
+  settings: HTMLButtonElement,
   secret: HTMLButtonElement,
 ): Overlay {
   let mode: Mode = "jensen";
@@ -244,6 +246,7 @@ export function startOverlay(
     drawTitle(title, theme);
     drawDoodles(doodles, theme, variant);
     paintButton(start, theme.button);
+    paintButton(settings, SETTINGS_BUTTON);
     paintButton(secret, SECRET_BUTTON);
   };
 

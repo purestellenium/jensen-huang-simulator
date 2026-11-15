@@ -28,6 +28,23 @@
   user-select: none;
 }
 
+.hud-settings {
+  position: absolute;
+  top: 0.7rem;
+  right: 1rem;
+  width: 2.8rem;
+  height: 2.8rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.hud-settings:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
 .table {
   position: relative;
   display: flex;
@@ -54,6 +71,20 @@
   align-self: start;
   width: min(100%, 30vh);
   aspect-ratio: 1;
+}
+
+.card.newsflash {
+  grid-template-columns: clamp(9rem, 30%, 18rem) 1fr;
+}
+
+.card.newsflash .portrait {
+  width: min(100%, 38vh);
+  aspect-ratio: 327 / 405;
+  margin-bottom: 2.4rem;
+}
+
+.card.newsflash.plain-portrait .portrait {
+  margin-bottom: 0;
 }
 
 .portrait[hidden] {
@@ -201,6 +232,10 @@
 
   .table {
     padding: 3rem 0.6rem 3.2rem;
+  }
+
+  .card.newsflash {
+    grid-template-columns: 8rem 1fr;
   }
 
   .card {

@@ -1,5 +1,6 @@
 :root {
   --backdrop: #121c0e;
+  --title-size: clamp(48px, 10vw, 150px);
 }
 
 html,
@@ -28,10 +29,6 @@ h1 {
 main {
   position: fixed;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 4vh 5vw;
   pointer-events: none;
 }
 
@@ -40,18 +37,24 @@ main[hidden] {
 }
 
 nav {
-  position: relative;
+  position: absolute;
+  left: 5vw;
+  top: calc(4vh + var(--title-size) * 2.3);
+  bottom: 3vh;
   display: flex;
-  gap: 1.5rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.2rem;
+  width: min(34rem, 56vw);
 }
 
-#start,
-#secret {
+nav button {
+  flex: 1 1 0;
+  min-height: 3rem;
+  max-height: 8.5rem;
+  padding: 0;
   pointer-events: auto;
-  padding: 0.35em 1.2em 0.45em;
-  font-family: Arial, sans-serif;
-  font-size: clamp(1.5rem, 4vw, 3rem);
-  font-weight: bold;
+  font: bold clamp(1.5rem, 4vw, 3rem) Arial, sans-serif;
   color: transparent;
   background: var(--art) center / 100% 100% no-repeat;
   border: 0;
@@ -59,19 +62,30 @@ nav {
   cursor: pointer;
 }
 
-#start:hover,
-#start:focus-visible,
-#secret:hover,
-#secret:focus-visible {
+nav button:hover,
+nav button:focus-visible {
   background-image: var(--art-hover);
   outline: none;
 }
 
-#start:active,
-#secret:active {
+nav button:active {
   transform: translate(3px, 3px);
 }
 
-#secret[hidden] {
+nav button[hidden] {
   display: none;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  nav {
+    top: auto;
+    bottom: 4vh;
+    right: 5vw;
+    width: auto;
+  }
+
+  nav button {
+    flex: 0 0 auto;
+    height: clamp(3.4rem, 8vh, 5rem);
+  }
 }

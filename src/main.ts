@@ -4,7 +4,9 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { unlockMusic } from "./audio";
 import { startOverlay, type Mode } from "./overlay";
+import { openSettings } from "./settingsPanel";
 import { startGame } from "./game/game";
 import { Screensaver } from "./game/screensaver";
 import { STRINGS } from "./strings";
@@ -14,7 +16,9 @@ const JENSEN_SPRITE_HEIGHT = 1.8;
 const OUTLINE_COLOR = "#76b900";
 const OUTLINE_THICKNESS = 0.03;
 const HACKCLUB_MODEL_URL = "/models/scan.glb";
-const RESOLUTION_SCALE = 0.3;
+const HACKCLUB_RESOLUTION = 0.3;
+const MIN_RESOLUTION = 0.3;
+const MAX_RESOLUTION = 1;
 const POSTERIZE_LEVELS = 6;
 const TURNTABLE_RADIANS_PER_SECOND = 0.6;
 
@@ -29,17 +33,23 @@ if (!backdrop) throw new Error("#backdrop canvas missing");
 const screensaver = new Screensaver(backdrop);
 const startButton = document.querySelector<HTMLButtonElement>("#start");
 if (!startButton) throw new Error("#start button missing");
+const settingsButton = document.querySelector<HTMLButtonElement>("#settings");
+if (!settingsButton) throw new Error("#settings button missing");
 const secretButton = document.querySelector<HTMLButtonElement>("#secret");
 if (!secretButton) throw new Error("#secret button missing");
 document.title = STRINGS.document.title;
 overlay.setAttribute("aria-label", STRINGS.document.title);
 startButton.textContent = STRINGS.title.start;
+settingsButton.textContent = STRINGS.title.settings;
 secretButton.textContent = STRINGS.title.secret;
-const ui = startOverlay(overlay, doodles, startButton, secretButton);
+const ui = startOverlay(overlay, doodles, startButton, settingsButton, secretButton);
+
+settingsButton.addEventListener("click", () => openSettings(settingsButton));
+for (const type of ["pointerdown", "pointerup", "keydown"]) window.addEventListener(type, unlockMusic);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
 renderer.setClearColor(0x000000, 0);
-renderer.setPixelRatio(RESOLUTION_SCALE);
+renderer.setPixelRatio(HACKCLUB_RESOLUTION);
 
 const scene = new THREE.Scene();
 
@@ -88,6 +98,7 @@ interface LoadedModel {
 
 const models: Partial<Record<Mode, LoadedModel>> = {};
 let mode: Mode = "jensen";
+let jensenTextureHeight = 305;
 
 function frameCamera(size: THREE.Vector3): void {
   const halfFov = THREE.MathUtils.degToRad(camera.fov / 2);
@@ -99,6 +110,23 @@ function frameCamera(size: THREE.Vector3): void {
   camera.lookAt(0, 0, 0);
 }
 
+function resolutionFor(target: Mode): number {
+  if (target === "hackclub") return HACKCLUB_RESOLUTION;
+  const visibleHeight = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const spritePixels = (JENSEN_SPRITE_HEIGHT / visibleHeight) * window.innerHeight;
+  return Math.min(MAX_RESOLUTION, Math.max(MIN_RESOLUTION, jensenTextureHeight / spritePixels));
+}
+
+function applyResolution(): void {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const ratio = resolutionFor(mode);
+  renderer.setPixelRatio(ratio);
+  renderer.setSize(width, height, false);
+  composer.setPixelRatio(ratio);
+  composer.setSize(width, height);
+}
+
 function showMode(next: Mode): void {
   mode = next;
   ui.setMode(next);
@@ -108,19 +136,16 @@ function showMode(next: Mode): void {
   }
   const active = models[next];
   if (active) frameCamera(active.size);
+  applyResolution();
 }
 
 function resize(): void {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  camera.aspect = width / height;
+  camera.aspect = window.innerWidth / window.innerHeight;
   camera.filmOffset = camera.aspect > 1 ? -camera.getFilmWidth() * 0.22 : 0;
   camera.updateProjectionMatrix();
-  renderer.setSize(width, height, false);
-  composer.setPixelRatio(RESOLUTION_SCALE);
-  composer.setSize(width, height);
   const active = models[mode];
   if (active) frameCamera(active.size);
+  applyResolution();
 }
 
 function silhouette(image: HTMLImageElement, color: string): THREE.CanvasTexture {
@@ -145,6 +170,7 @@ new THREE.TextureLoader().load(
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.magFilter = THREE.NearestFilter;
     const { width, height } = texture.image as { width: number; height: number };
+    jensenTextureHeight = height;
     const planeWidth = JENSEN_SPRITE_HEIGHT * (width / height);
     const sprite = new THREE.Mesh(
       new THREE.PlaneGeometry(planeWidth, JENSEN_SPRITE_HEIGHT),

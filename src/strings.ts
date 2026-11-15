@@ -11,6 +11,7 @@ export const STRINGS = {
     jensen: ["JENSEN HUANG", "SIMULATOR"],
     hackclub: ["HACK CLUB", "SIMULATOR"],
     start: "Start",
+    settings: "Options",
     secret: "Secret Mode",
     logo: {
       nvidia: "NVIDIA",
@@ -19,13 +20,12 @@ export const STRINGS = {
   },
 
   hud: {
-    turn: "TURN",
-    summaryTurn: (turn: number) => `Turn ${turn}.`,
+    summaryTurn: (turn: number) => `Round ${turn}.`,
     quarterLabel: (quarter: number) => `Q${quarter}`,
     progressLabel: (revenue: number, target: number) => `${trimmed(revenue)}/${trimmed(target)}`,
     debt: (boost: number) => `+${Math.round(boost * 100)}%`,
     summaryQuarter: (quarter: number, revenue: number, target: number, left: number) =>
-      `Quarter ${quarter}, $${trimmed(revenue)}M of $${trimmed(target)}M, ${left} turn${left === 1 ? "" : "s"} left.`,
+      `Quarter ${quarter}, $${trimmed(revenue)}M of $${trimmed(target)}M, ${left} round${left === 1 ? "" : "s"} left.`,
     stats: {
       money: "Money",
       affairs: "Affairs",
@@ -47,6 +47,20 @@ export const STRINGS = {
     signal: "Signal",
   },
 
+  settings: {
+    title: "OPTIONS",
+    back: "Back",
+    music: (volume: number) => `Music: ${volume}%`,
+    musicName: "Music volume",
+    mute: "Mute",
+    unmute: "Unmute",
+    textSpeed: "Text speed",
+    speeds: { slow: "Slow", normal: "Normal", fast: "Fast", instant: "Instant" },
+    background: "Moving background",
+    on: "On",
+    off: "Off",
+  },
+
   endings: {
     feds: {
       headline: "NVIDIA CEO ARRESTED IN LEATHER JACKET",
@@ -60,7 +74,38 @@ export const STRINGS = {
       headline: "NVIDIA BOARD OUSTS CEO OVER AFFAIR",
       story: "\"We tolerate a lot of things,\" said one director. \"A leaked group chat is not one of them.\"",
     },
-    bounceBack: "How will Jensen Huang bounce back from this?",
+    newCeo: (name: string) => `NVIDIA NAMES NEW CEO ${name.toUpperCase()}`,
+    newCeoStory: "\"Great energy,\" said one director. \"Honestly, he reminds me of someone, but I can't place who.\"",
+    newsflash: "NEWSFLASH",
+  },
+
+  tutorial: {
+    intro: "You are Jensen Huang, NVIDIA CEO. You are very rich, and you own many leather jackets.",
+    goal: "Your goal: have as many affairs as possible. Meet quarterly earnings to keep the board happy, and avoid getting investigated by the FBI.",
+    money: "Money. Your cash, in millions. It buys your way out of trouble, and the right deals make more of it.",
+    affairs: "Affairs. This is your score, so rack them up. Just don't get caught, or the board will oust you.",
+    feds: "Wanted level. How much the FBI suspects you. Five stars and you are arrested. Only money makes them forget.",
+    earnings: "Quarterly earnings. Earn enough before the six notches run out. Miss two quarters in a row and you are fired.",
+    board: "Board confidence. Keep it above zero or you are out.",
+  },
+
+  summary: {
+    title: "FINAL STATS",
+    turns: (count: number) => `Rounds played: ${count}`,
+    quarter: (number: number) => `Quarter reached: Q${number}`,
+    affairs: (count: number) => `Affairs: ${count}`,
+    moneyBoard: (money: string, board: number) => `Money: ${money}   Board: ${board}`,
+    wanted: (stars: string) => `Wanted: ${stars}`,
+  },
+
+  identities: {
+    original: "Jensen Huang",
+    beard: "Hensen Juang",
+    detective: "Hensen Juang",
+    blonde: "Hensen Juang",
+    monopoly: "Hensen Juang",
+    mustache: "Hensen Juang",
+    propeller: "Hensen Juang",
   },
 
   scenarios: {
@@ -286,40 +331,40 @@ export const STRINGS = {
       text: "On a business trip, you and a senior VP get a little closer than expected.",
       game: {
         label: "Game is game",
-        result: "Nobody on the plane home says a word. Nobody has to.",
+        result: "Life is meant for having fun, and you have a lot of it.",
       },
       hr: {
         label: "Recall your HR training",
-        result: "You recall your HR training. It is a very long module. Nothing happens.",
+        result: "You recall your HR training- something about avoiding manager-employee relationships.",
       },
     },
     employee: {
       text: "An unnamed NVIDIA employee carrying things runs into you at HQ, dropping all of her things on the floor.",
       help: {
-        label: "Help her pick them up",
-        result: "You both reach for the same stapler. It becomes a longer conversation than it needs to be.",
+        label: "Help her, and take your time",
+        result: "You carry her boxes to the 9th floor, taking the scenic route through a supply closet with a lock you have never noticed before.",
       },
       walkPast: {
-        label: "Walk past",
-        result: "You walk past. Security footage shows you walk past very carefully.",
+        label: "Just help her pick things up",
+        result: "You help her gather everything, wish her a good day, and head to your meeting. Professional. Boring. Safe.",
       },
     },
     exec: {
       text: "An exec at a Chinese company hits on you, and you think she's kind of hot.",
       pursue: {
         label: "Pursue",
-        result: "Dinner turns into the hotel bar, and the hotel bar turns into several phone calls you do not remember.",
+        result: "Exchanged compliments become dinner, and dinner turns into the hotel bar, and the hotel bar turns into several phone calls you do not remember.",
       },
       decline: {
         label: "Politely decline",
-        result: "You decline. She smiles like she has already written down what you said.",
+        result: "You thank her, but decline her offer to go to dinner. She notices the ring on your wedding finger, realizes, and smiles.",
       },
     },
     hrComplaint: {
       text: "HR: a complaint has been filed about you and an NVIDIA employee.",
       settle: {
         label: "Settle quietly",
-        result: "A settlement and a very long nondisclosure agreement. You never speak of it again.",
+        result: "The company lawyers spin up a settlement and a very long nondisclosure agreement, both of which you sign quickly, without asking questions.",
       },
       deny: {
         label: "Deny everything",
@@ -331,7 +376,7 @@ export const STRINGS = {
       text: "Quarterly earnings. The board is pleased with this quarter's numbers.",
       bow: {
         label: "Take a bow",
-        result: "The board applauds. The stock is up. The jacket gets a standing ovation.",
+        result: "The board applauds. The stock is up. They love your signature jacket.",
       },
     },
     earningsMiss: {
@@ -355,7 +400,7 @@ export const STRINGS = {
       callBack: {
         label: "Call them back",
         fine: "They just wanted the keynote slides.",
-        bad: "They wanted something else entirely.",
+        bad: "Bad news. They wanted something that you probably don't want them to want.",
       },
       letRing: {
         label: "Let it ring",
@@ -371,7 +416,7 @@ export const STRINGS = {
       takeCall: {
         label: "Take the call",
         calm: "You stay calm. You say \"transparency\" four times. They seem to like it.",
-        blowup: "You stay calm for eleven seconds. The remaining call is not calm.",
+        blowup: "You stay calm for eleven seconds. The board does not seem to be on the same page.",
       },
     },
     blackwell: {
@@ -387,7 +432,7 @@ export const STRINGS = {
       },
       scapegoat: {
         label: "Scapegoat the logistics VP",
-        result: "The logistics VP leaves with a generous severance and a very long stare.",
+        result: "The logistics VP leaves with a generous severance and a glare that may keep you up at night for weeks to come.",
       },
     },
     vpGossip: {
@@ -417,8 +462,8 @@ export const STRINGS = {
         result: "You say nothing. The board hears you say nothing.",
       },
       blame: {
-        label: "Blame the exec's company",
-        result: "You hint that Megaspeed's parent company has loose security. It sounds exactly as convenient as it is.",
+        label: "Blame a disgruntled former employee",
+        result: "Every company has one. HR hands over a list of former employees, and a much longer list of their grievances.",
       },
     },
     qa: {
@@ -434,7 +479,7 @@ export const STRINGS = {
       },
       joke: {
         label: "Joke about the jacket",
-        result: "The room laughs. The jacket is the best-performing asset in the company.",
+        result: "The room laughs. The leather jacket is the most important asset to the entire company.",
       },
     },
     stockPop: {
@@ -462,7 +507,7 @@ export const STRINGS = {
       ],
       buy: {
         label: "Buy it",
-        result: "You buy the jacket. It fits like it was meant for you. It was not, but it fits.",
+        result: "You buy the jacket. It fits like it was meant for you. It was not, but it fits like it was.",
       },
       pass: {
         label: "Keep walking",

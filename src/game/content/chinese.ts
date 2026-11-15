@@ -40,7 +40,7 @@ const buyers: Scenario[] = buyerTiers.flatMap((tier, index) =>
             stats: { money: tier.money, feds: 20 },
             counters: { sales: 1, evidence: 1 },
             setFlags: ["sold_to_china"],
-            schedule: [{ id: "fbi-pallet", after: [1, 2] }],
+            schedule: [{ id: "fbi-pallet", after: [2, 4] }],
           },
         },
       ],

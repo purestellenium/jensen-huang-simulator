@@ -1,7 +1,7 @@
 import rough from "roughjs";
 import type { RoughCanvas } from "roughjs/bin/canvas";
 import { imageFor } from "../images";
-import { NVIDIA_GREEN, TITLE_YELLOW, drawBadPhotoshopText } from "../pixel";
+import { NVIDIA_GREEN, drawBadPhotoshopText } from "../pixel";
 import { STRINGS } from "../strings";
 import { QUARTER_LENGTH } from "./quarter";
 import { FEDS_PER_STAR, MAX_STARS, type QuarterState, type Stats } from "./types";
@@ -275,25 +275,80 @@ function rowFit(ctx: CanvasRenderingContext2D, pens: Pen[], stats: Stats, rect: 
   return { s, total, scale: Math.min(1, available / total) };
 }
 
-function drawRow(ctx: CanvasRenderingContext2D, pens: Pen[], stats: Stats, rect: Rect, row: Row): void {
-  const { s, total, scale } = rowFit(ctx, pens, stats, rect, row);
+function drawRow(ctx: CanvasRenderingContext2D, pens: Pen[], stats: Stats, rect: Rect, row: Row, bounds: Record<number, Rect>): void {
+  const { s, scale } = rowFit(ctx, pens, stats, rect, row);
+  const originX = rect.x + MARGIN;
+  const originY = row.y + (row.height - s * scale) / 2;
+  let cursor = 0;
   ctx.save();
-  ctx.translate(rect.x + rect.width - MARGIN - total * scale, row.y + (row.height - s * scale) / 2);
+  ctx.translate(originX, originY);
   ctx.scale(scale, scale);
   for (const index of row.chips) {
     const used = CHIPS[index]!(pens[index]!, s, stats, false);
+    bounds[index] = { x: originX + cursor * scale, y: originY, width: used * scale, height: s * scale };
+    cursor += used + s * CHIP_GAP;
     ctx.translate(used + s * CHIP_GAP, 0);
   }
   ctx.restore();
 }
 
-export function paintHud(ctx: CanvasRenderingContext2D, rect: Rect, state: HudState | null, repaint: () => void): HudIcon[] {
+export function paintGear(canvas: HTMLCanvasElement, rect: Rect): void {
+  const rc = rough.canvas(canvas);
+  const cx = rect.x + rect.width / 2;
+  const cy = rect.y + rect.height / 2;
+  const outer = Math.min(rect.width, rect.height) / 2 - 2;
+  const root = outer * 0.76;
+  const teeth = 8;
+  const step = (Math.PI * 2) / teeth;
+  const points: [number, number][] = [];
+  for (let tooth = 0; tooth < teeth; tooth++) {
+    for (const [offset, radius] of [[0, root], [0.12, outer], [0.38, outer], [0.5, root]] as const) {
+      const angle = (tooth + offset) * step;
+      points.push([cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius]);
+    }
+  }
+  rc.polygon(points, {
+    seed: 3,
+    roughness: 1.2,
+    bowing: 1,
+    disableMultiStroke: true,
+    stroke: "#fff",
+    strokeWidth: 3,
+    fill: "#9a9a9a",
+    fillStyle: "solid",
+  });
+  rc.circle(cx, cy, outer * 0.75, {
+    seed: 4,
+    roughness: 1,
+    disableMultiStroke: true,
+    stroke: "#fff",
+    strokeWidth: 3,
+    fill: "#000",
+    fillStyle: "solid",
+  });
+}
+
+export const HUD_CHIPS = { money: 0, affairs: 1, feds: 2, earnings: 3, board: 4 } as const;
+
+export interface HudLayout {
+  icons: HudIcon[];
+  chips: Record<number, Rect>;
+}
+
+export function paintHud(
+  ctx: CanvasRenderingContext2D,
+  rect: Rect,
+  state: HudState | null,
+  repaint: () => void,
+  reserved: number,
+): HudLayout {
   ctx.fillStyle = "#000";
   ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
   ctx.fillStyle = NVIDIA_GREEN;
   ctx.fillRect(rect.x, rect.y + rect.height - 3, rect.width, 3);
   const placed: HudIcon[] = [];
-  if (!state) return placed;
+  const chips: Record<number, Rect> = {};
+  if (!state) return { icons: placed, chips };
 
   const { stats, turn, quarter, elapsed } = state;
   const rc = rough.canvas(ctx.canvas);
@@ -301,32 +356,18 @@ export function paintHud(ctx: CanvasRenderingContext2D, rect: Rect, state: HudSt
   const pens = CHIPS.map(
     (_, index): Pen => ({ rc, ctx, seed: turn * 5 + index + 1, meterWidth: METER_WIDTH, icon, quarter, elapsed, placed }),
   );
-  const turnLabel = `${STRINGS.hud.turn} ${turn}`;
 
-  const paintTurn = (rowY: number, rowHeight: number): number => {
-    const size = rowHeight * 0.42;
-    const font = `${size}px ${TITLE_FACE}`;
-    return drawBadPhotoshopText(ctx, turnLabel, rect.x + MARGIN, rowY + rowHeight * 0.64, size, font, TITLE_YELLOW, "#000", null) - rect.x;
-  };
-
-  const measureTurn = (rowHeight: number): number => {
-    ctx.font = `${rowHeight * 0.42}px ${TITLE_FACE}`;
-    return ctx.measureText(turnLabel).width + MARGIN;
-  };
-
-  const single: Row = { chips: [0, 1, 2, 3, 4], y: rect.y, height: rect.height, reserved: measureTurn(rect.height) };
+  const single: Row = { chips: [0, 1, 2, 3, 4], y: rect.y, height: rect.height, reserved };
   if (rowFit(ctx, pens, stats, rect, single).scale >= MIN_ROW_SCALE) {
-    paintTurn(single.y, single.height);
-    drawRow(ctx, pens, stats, rect, single);
-    return placed;
+    drawRow(ctx, pens, stats, rect, single, chips);
+    return { icons: placed, chips };
   }
 
   for (const pen of pens) pen.meterWidth = NARROW_METER_WIDTH;
   const topHeight = (rect.height - 3) * 0.4;
-  const top: Row = { chips: [0, 1], y: rect.y, height: topHeight, reserved: measureTurn(topHeight) };
+  const top: Row = { chips: [0, 1], y: rect.y, height: topHeight, reserved };
   const bottom: Row = { chips: [2, 3, 4], y: rect.y + topHeight, height: rect.height - 3 - topHeight, reserved: 0 };
-  paintTurn(top.y, top.height);
-  drawRow(ctx, pens, stats, rect, top);
-  drawRow(ctx, pens, stats, rect, bottom);
-  return placed;
+  drawRow(ctx, pens, stats, rect, top, chips);
+  drawRow(ctx, pens, stats, rect, bottom, chips);
+  return { icons: placed, chips };
 }
