@@ -6,6 +6,7 @@ import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { startOverlay, type Mode } from "./overlay";
 import { startGame } from "./game/game";
+import { Screensaver } from "./game/screensaver";
 import { STRINGS } from "./strings";
 
 const JENSEN_SPRITE_URL = "/images/jensen.png";
@@ -23,6 +24,9 @@ const overlay = document.querySelector<HTMLCanvasElement>("#overlay");
 if (!overlay) throw new Error("#overlay canvas missing");
 const doodles = document.querySelector<HTMLCanvasElement>("#doodles");
 if (!doodles) throw new Error("#doodles canvas missing");
+const backdrop = document.querySelector<HTMLCanvasElement>("#backdrop");
+if (!backdrop) throw new Error("#backdrop canvas missing");
+const screensaver = new Screensaver(backdrop);
 const startButton = document.querySelector<HTMLButtonElement>("#start");
 if (!startButton) throw new Error("#start button missing");
 const secretButton = document.querySelector<HTMLButtonElement>("#secret");
@@ -33,11 +37,11 @@ startButton.textContent = STRINGS.title.start;
 secretButton.textContent = STRINGS.title.secret;
 const ui = startOverlay(overlay, doodles, startButton, secretButton);
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+renderer.setClearColor(0x000000, 0);
 renderer.setPixelRatio(RESOLUTION_SCALE);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1b1b1b);
 
 const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
 
@@ -98,6 +102,7 @@ function frameCamera(size: THREE.Vector3): void {
 function showMode(next: Mode): void {
   mode = next;
   ui.setMode(next);
+  screensaver.setKind(next === "hackclub" ? "cheese" : "gpu");
   for (const [key, model] of Object.entries(models)) {
     model.object.visible = key === next;
   }
@@ -216,7 +221,7 @@ startButton.addEventListener("click", () => {
   onTitleScreen = false;
   ui.stop();
   renderer.setAnimationLoop(null);
-  for (const node of [canvas, overlay, doodles, document.querySelector("main")]) {
+  for (const node of [backdrop, canvas, overlay, doodles, document.querySelector("main")]) {
     if (node) node.hidden = true;
   }
   const game = document.querySelector<HTMLElement>("#game");

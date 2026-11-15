@@ -3,9 +3,10 @@ body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: #111;
+  background: #0e1f08;
 }
 
+#backdrop,
 #stage,
 #doodles,
 #overlay {

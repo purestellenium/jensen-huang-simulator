@@ -10,6 +10,7 @@ import {
 } from "../pixel";
 import { outlineButtonArt } from "../sketch";
 import { paintHud } from "./hud";
+import { Screensaver } from "./screensaver";
 import { STRINGS } from "../strings";
 import { APPS, APP_ORDER } from "./apps";
 import { CONTACTS, type Contact } from "./content";
@@ -88,6 +89,9 @@ export class GameView {
 
   constructor(private readonly root: HTMLElement) {
     root.replaceChildren();
+    const backdrop = el("canvas", "art", root);
+    backdrop.setAttribute("aria-hidden", "true");
+    new Screensaver(backdrop);
     this.art = el("canvas", "art", root);
     this.art.setAttribute("aria-hidden", "true");
     this.sprites = el("canvas", "art", root);
