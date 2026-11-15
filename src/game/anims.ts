@@ -17,7 +17,7 @@ const ART = {
   sirenRed: "/images/anim/siren-red.svg",
   sirenBlue: "/images/anim/siren-blue.svg",
   stamp: "/images/anim/stamp.svg",
-  jacket: "/images/anim/jacket.svg",
+  jacket: "/images/anim/jacket.png",
   shredder: "/images/anim/shredder.svg",
   sheet: "/images/anim/sheet.svg",
 } as const;
