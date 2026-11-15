@@ -122,6 +122,23 @@ export const STRINGS = {
     propeller: "Hensen Juang",
   },
 
+  anims: {
+    dnd: "DO NOT DISTURB",
+    cleared: "CLEARED",
+    rec: "REC",
+    receipt: {
+      header: "DEWEY, CHEATEM & HOWE LLP",
+      items: [
+        ["HELLO", "$900"],
+        ["GOODBYE", "$900"],
+        ["READING YOUR TEXTS", "$90,000"],
+        ["UNREADING YOUR TEXTS", "$250,000"],
+        ["PARTNER'S NEW BOAT", "$1,200,000"],
+        ["WHOLE FIRM x 9,398 HRS", "$8,458,200"],
+      ],
+      total: ["TOTAL", "$10,000,000"],
+    },
+  },
   scenarios: {
     buyer: {
       names: ["DeepSeek", "Qwen", "Kimi"],
@@ -346,8 +363,8 @@ export const STRINGS = {
         "Dana wants to match! Her bio says: \"Seeking a man with great jackets and no commitments.\"",
         "Priya wants to match! Her bio says: \"I don't care about the stock price. (I do.)\"",
         "Camille wants to match! Her bio says: \"Fluent in CUDA. Fluent in other things.\"",
-        "Kyle, 34, wants to match! His bio says: \"Looking for someone who understands CUDA.\"",
       ],
+      kyle: "Kyle, 34, wants to match! His bio says: \"Looking for someone who understands CUDA.\"",
       yes: {
         label: "Swipe right",
         result: "It's a match. You tell yourself it is market research.",

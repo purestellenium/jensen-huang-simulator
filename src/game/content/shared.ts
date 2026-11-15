@@ -9,6 +9,7 @@ export interface Contact {
 
 export const CONTACTS: Record<string, Contact> = {
   spy: { emoji: "🕶️", color: "#a633d6" },
+  kyle: { emoji: "👨", color: "#a633d6" },
   ling: { emoji: "📦", color: "#338eda" },
   fbi: { emoji: "🕵️", color: "#8492a6" },
   board: { emoji: "👔", color: "#338eda" },

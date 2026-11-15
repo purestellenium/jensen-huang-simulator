@@ -32,8 +32,28 @@ export interface Effect {
   targetBoost?: number;
 }
 
+export type Anim =
+  | "pride"
+  | "china"
+  | "money"
+  | "door"
+  | "receipt"
+  | "kiss"
+  | "coins"
+  | "cashAway"
+  | "siren"
+  | "cleared"
+  | "crash"
+  | "rise"
+  | "nope"
+  | "shred"
+  | "kick"
+  | "jacket"
+  | "rec";
+
 export interface Outcome {
   result: string;
+  anim?: Anim;
   hint?: string;
   effects?: Effect;
   next?: string;

@@ -172,7 +172,10 @@ function build(): Built {
     if (event.target === panel) closeSettings();
   });
   window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !panel.hidden) closeSettings();
+    if ((event.key === "Escape" || event.key === "Backspace") && !panel.hidden) {
+      event.preventDefault();
+      closeSettings();
+    }
   });
   window.addEventListener("resize", () => {
     if (!panel.hidden) paint();

@@ -3,6 +3,7 @@ import { STRINGS } from "../strings";
 import { ENDINGS, SCENARIOS } from "./content";
 import { takeDevEnd, watchDevCodes } from "./dev";
 import { FEDS_PER_STAR, type GameState, type LossKind } from "./types";
+import { autoAnim, preloadAnimArt } from "./anims";
 import { drawScenario, newGame, resolveChoice } from "./engine";
 import { imageFor } from "../images";
 import { allIdentityImages, currentIdentity, nextIdentity } from "./identity";
@@ -40,6 +41,7 @@ export async function startGame(root: HTMLElement): Promise<void> {
   const view = new GameView(root);
   watchDevCodes();
   for (const url of allIdentityImages()) imageFor(url, () => {});
+  preloadAnimArt();
 
   let first = true;
   for (;;) {
@@ -59,6 +61,11 @@ export async function startGame(root: HTMLElement): Promise<void> {
       const outcome = resolveChoice(state, choice);
       if (takeDevEnd()) state.loss = state.loss ?? "board";
       view.updateStats(state);
+      if (outcome.anim) await view.animate(outcome.anim);
+      else {
+        const auto = autoAnim(choice, outcome);
+        if (auto) void view.animate(auto);
+      }
       await view.narrate(outcome.hint ? `${outcome.result}\n${outcome.hint}` : outcome.result);
     }
 

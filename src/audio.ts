@@ -1,7 +1,25 @@
 import { getSettings, musicGain, onSettingsChange, sfxGain } from "./settings";
 
 const BGM_URL = "/audio/bgm.m4a";
-const SOUND_URLS = { pop: "/audio/pop.wav" } as const;
+const SOUND_URLS = {
+  pop: "/audio/pop.wav",
+  flag: "/audio/flag.wav",
+  money: "/audio/money.wav",
+  door: "/audio/door.wav",
+  receipt: "/audio/receipt.wav",
+  kiss: "/audio/kiss.wav",
+  coins: "/audio/coins.wav",
+  cashaway: "/audio/cashaway.wav",
+  siren: "/audio/siren.wav",
+  stamp: "/audio/stamp.wav",
+  crash: "/audio/crash.wav",
+  rise: "/audio/rise.wav",
+  nope: "/audio/nope.wav",
+  shred: "/audio/shred.wav",
+  kick: "/audio/kick.wav",
+  jacket: "/audio/jacket.wav",
+  rec: "/audio/rec.wav",
+} as const;
 const FADE_SECONDS = 2;
 const LOOKAHEAD_SECONDS = 180;
 const TOP_UP_MS = 5000;
@@ -9,7 +27,25 @@ const LEVEL_SMOOTHING = 0.05;
 
 export type SoundName = keyof typeof SOUND_URLS;
 
-const SOUND_LEVELS: Record<SoundName, number> = { pop: 0.5 };
+const SOUND_LEVELS: Record<SoundName, number> = {
+  pop: 0.5,
+  flag: 0.35,
+  money: 0.35,
+  door: 0.4,
+  receipt: 0.3,
+  kiss: 0.35,
+  coins: 0.3,
+  cashaway: 0.3,
+  siren: 0.15,
+  stamp: 0.35,
+  crash: 0.25,
+  rise: 0.25,
+  nope: 0.25,
+  shred: 0.25,
+  kick: 0.4,
+  jacket: 0.35,
+  rec: 0.2,
+};
 
 let context: AudioContext | null = null;
 let music: GainNode | null = null;
@@ -74,8 +110,12 @@ async function start(): Promise<void> {
   effects.gain.value = sfxGain(sfxVolume, muted);
   onSettingsChange(applyLevels);
 
-  const [track, pop] = await Promise.all([decode(audio, BGM_URL), decode(audio, SOUND_URLS.pop)]);
-  if (pop) sounds.pop = pop;
+  const names = Object.keys(SOUND_URLS) as SoundName[];
+  const [track, ...samples] = await Promise.all([decode(audio, BGM_URL), ...names.map((name) => decode(audio, SOUND_URLS[name]))]);
+  names.forEach((name, index) => {
+    const sample = samples[index];
+    if (sample) sounds[name] = sample;
+  });
   if (!track) return;
   buffer = track;
   beginMusic();

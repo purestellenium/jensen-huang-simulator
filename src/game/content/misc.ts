@@ -41,6 +41,7 @@ const jackets: Scenario[] = S.jacket.texts.map(
         tone: "yes",
         requires: [{ stat: "money", min: 2 }],
         result: S.jacket.buy.result,
+        anim: "jacket",
         effects: { stats: { money: -2 }, counters: { jackets: 1 } },
       },
     ],

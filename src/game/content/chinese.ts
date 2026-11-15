@@ -36,6 +36,7 @@ const buyers: Scenario[] = buyerTiers.flatMap((tier, index) =>
           label: S.buyer.accept.label,
           tone: "yes",
           result: tier.result,
+          anim: "china",
           hint: STRINGS.hints.pallet,
           effects: {
             stats: { money: tier.money, feds: 20 },
@@ -73,6 +74,7 @@ const envelopes: Scenario[] = envelopeTiers.map(
         label: S.envelope.accept.label,
         tone: "yes",
         result: tier.result,
+        anim: "money",
         hint: STRINGS.hints.envelope,
         effects: {
           stats: { money: tier.money },
@@ -144,6 +146,7 @@ const architecture: Scenario = {
       label: S.architecture.tell.label,
       tone: "yes",
       result: S.architecture.tell.result,
+      anim: "china",
       hint: STRINGS.hints.secrets,
       effects: {
         stats: { money: 25, feds: 20 },
@@ -172,6 +175,7 @@ const dinner: Scenario = {
       label: S.dinner.attend.label,
       tone: "yes",
       result: S.dinner.attend.result,
+      anim: "china",
       effects: {
         setFlags: ["dinner_attended"],
         schedule: [{ id: "chinese-exec", after: [1, 2] }],

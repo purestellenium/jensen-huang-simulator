@@ -29,6 +29,7 @@ const pallet: Scenario = {
       label: S.fbiPallet.lawyer.label,
       requires: [{ stat: "money", min: 8 }],
       result: S.fbiPallet.lawyer.result,
+      anim: "receipt",
       effects: { stats: { money: -8, feds: -20 } },
     },
   ],
@@ -59,6 +60,7 @@ const money: Scenario = {
       label: S.fbiMoney.lawyer.label,
       requires: [{ stat: "money", min: 6 }],
       result: S.fbiMoney.lawyer.result,
+      anim: "receipt",
       effects: { stats: { money: -6, feds: -20 } },
     },
   ],
@@ -109,8 +111,8 @@ const shippingSubpoena: Scenario = {
     {
       label: S.fbiShippingSubpoena.shred.label,
       outcomes: [
-        { result: S.fbiShippingSubpoena.shred.clean },
-        { result: S.fbiShippingSubpoena.shred.caught, effects: { stats: { feds: 40 }, counters: { evidence: 1 } } },
+        { result: S.fbiShippingSubpoena.shred.clean, anim: "shred" },
+        { result: S.fbiShippingSubpoena.shred.caught, anim: "shred", effects: { stats: { feds: 40 }, counters: { evidence: 1 } } },
       ],
     },
     {
@@ -183,6 +185,7 @@ const openUp: Scenario = {
       label: S.fbiOpenUp.stay.label,
       tone: "no",
       result: S.fbiOpenUp.stay.result,
+      anim: "kick",
       effects: {
         stats: { money: -3, feds: 20 },
         expiringFlags: [{ flag: "fbi_hostile", turns: 12 }],
@@ -218,6 +221,7 @@ const megaspeed: Scenario = {
       label: S.fbiMegaspeed.lawyer.label,
       requires: [{ stat: "money", min: 15 }],
       result: S.fbiMegaspeed.lawyer.result,
+      anim: "receipt",
       effects: { stats: { money: -15, feds: -20 } },
     },
   ],
@@ -241,6 +245,7 @@ const lawyer: Scenario = {
       tone: "yes",
       requires: [{ stat: "money", min: 10 }],
       result: S.lawyer.retain.result,
+      anim: "receipt",
       effects: { stats: { money: -10, feds: -20 } },
     },
   ],

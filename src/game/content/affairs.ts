@@ -1,5 +1,5 @@
 import { STRINGS } from "../../strings";
-import type { Scenario } from "../types";
+import type { Anim, Scenario } from "../types";
 import { jacketWeight } from "./shared";
 
 const S = STRINGS.scenarios;
@@ -20,6 +20,7 @@ const spy: Scenario = {
       label: S.spy.yes.label,
       tone: "yes",
       result: S.spy.yes.result,
+      anim: "china",
       effects: {
         stats: { affairs: 1 },
         counters: { evidence: 1 },
@@ -29,11 +30,16 @@ const spy: Scenario = {
   ],
 };
 
-const matches: Scenario[] = S.matches.texts.map(
-  (text, index): Scenario => ({
+const matchProfiles: { text: string; contact: string; anim?: Anim }[] = [
+  ...S.matches.texts.map((text) => ({ text, contact: "spy" })),
+  { text: S.matches.kyle, contact: "kyle", anim: "pride" },
+];
+
+const matches: Scenario[] = matchProfiles.map(
+  ({ text, contact, anim }, index): Scenario => ({
     id: `dating-match-${index + 1}`,
     app: "dating",
-    contact: "spy",
+    contact,
     weight: jacketWeight(0.2625),
     text,
     choices: [
@@ -46,6 +52,7 @@ const matches: Scenario[] = S.matches.texts.map(
         label: S.matches.yes.label,
         tone: "yes",
         result: S.matches.yes.result,
+        anim,
         effects: { stats: { affairs: 1 }, counters: { evidence: 1 } },
       },
     ],
@@ -89,6 +96,7 @@ const podcast: Scenario = {
       label: S.podcast.yes.label,
       tone: "yes",
       result: S.podcast.yes.result,
+      anim: "rec",
       effects: { stats: { affairs: 1 }, counters: { evidence: 1 } },
     },
   ],
@@ -152,6 +160,7 @@ const trip: Scenario = {
       label: S.trip.game.label,
       tone: "yes",
       result: S.trip.game.result,
+      anim: "door",
       hint: STRINGS.hints.gossip,
       effects: {
         stats: { affairs: 1 },
