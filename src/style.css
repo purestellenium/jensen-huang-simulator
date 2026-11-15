@@ -40,12 +40,31 @@ nav {
   position: absolute;
   left: 5vw;
   top: calc(4vh + var(--title-size) * 2.3);
-  bottom: 3vh;
+  bottom: calc(3vh + 4.4rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 1.2rem;
   width: min(34rem, 56vw);
+}
+
+#notice {
+  position: absolute;
+  left: calc(5vw - 0.2em);
+  bottom: 1.2vh;
+  image-rendering: pixelated;
+}
+
+#credits a {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+#credits a:hover,
+#credits a:focus-visible {
+  outline: none;
+  border-bottom: 3px solid #fff;
 }
 
 nav button {
@@ -79,7 +98,7 @@ nav button[hidden] {
 @media (max-aspect-ratio: 1/1) {
   nav {
     top: auto;
-    bottom: 4vh;
+    bottom: calc(4vh + 4.4rem);
     right: 5vw;
     width: auto;
   }

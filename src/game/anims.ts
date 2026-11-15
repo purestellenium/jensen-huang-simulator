@@ -8,23 +8,17 @@ const ART = {
   bill: "/images/anim/bill.svg",
   door: "/images/anim/door.svg",
   frame: "/images/anim/frame.svg",
-  knob: "/images/anim/knob.svg",
-  dnd: "/images/anim/dnd.svg",
   printer: "/images/anim/printer.svg",
   lips: "/images/anim/lips.svg",
   coin: "/images/anim/coin.svg",
   x1: "/images/anim/x1.svg",
   x2: "/images/anim/x2.svg",
-  chartDown: "/images/anim/chart-down.svg",
-  chartUp: "/images/anim/chart-up.svg",
   sirenRed: "/images/anim/siren-red.svg",
   sirenBlue: "/images/anim/siren-blue.svg",
   stamp: "/images/anim/stamp.svg",
   jacket: "/images/anim/jacket.svg",
   shredder: "/images/anim/shredder.svg",
   sheet: "/images/anim/sheet.svg",
-  recDot: "/images/anim/rec-dot.svg",
-  recCorner: "/images/anim/rec-corner.svg",
 } as const;
 
 const BILL_COUNT = 36;
@@ -91,48 +85,6 @@ async function money(layer: HTMLElement): Promise<void> {
     ).finished;
   });
   await Promise.all(falls);
-}
-
-async function door(layer: HTMLElement): Promise<void> {
-  playSound("door");
-  layer.classList.add("anim-hallway");
-  const trims = ["left", "right", "top"].map((side) => art(ART.frame, `anim-trim anim-trim-${side}`, layer));
-  const panel = div("anim-door", layer);
-  art(ART.door, "anim-door-art", panel);
-  const handle = div("anim-handle", panel);
-  const sign = div("anim-sign", handle);
-  art(ART.dnd, "anim-sign-art", sign);
-  const label = div("anim-sign-text", sign);
-  label.textContent = STRINGS.anims.dnd;
-  art(ART.knob, "anim-knob", handle);
-
-  for (const trim of trims) trim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, fill: "backwards" });
-  await panel.animate(
-    [
-      { transform: "rotateY(-88deg)", easing: "ease-in" },
-      { transform: "rotateY(0deg)", offset: 0.75 },
-      { transform: "rotateY(-5deg)", offset: 0.87 },
-      { transform: "rotateY(0deg)" },
-    ],
-    { duration: 600 },
-  ).finished;
-  await sign.animate([{ transform: "translateY(-120vh)" }, { transform: "translateY(0)" }], {
-    duration: 350,
-    easing: "ease-in",
-    fill: "forwards",
-  }).finished;
-  await sign.animate(
-    [
-      { transform: "rotate(0deg)" },
-      { transform: "rotate(14deg)" },
-      { transform: "rotate(-9deg)" },
-      { transform: "rotate(5deg)" },
-      { transform: "rotate(-2deg)" },
-      { transform: "rotate(0deg)" },
-    ],
-    { duration: 900, easing: "ease-in-out", fill: "forwards" },
-  ).finished;
-  await layer.animate([{ opacity: 1 }, { opacity: 1, offset: 0.65 }, { opacity: 0 }], { duration: 850 }).finished;
 }
 
 async function receipt(layer: HTMLElement): Promise<void> {
@@ -254,20 +206,6 @@ async function cleared(layer: HTMLElement): Promise<void> {
   ).finished;
 }
 
-async function chart(layer: HTMLElement, src: string, sound: "crash" | "rise"): Promise<void> {
-  playSound(sound);
-  const line = art(src, "anim-chart", layer);
-  await line.animate(
-    [
-      { clipPath: "inset(0 100% 0 0)", opacity: 1 },
-      { clipPath: "inset(0 0 0 0)", opacity: 1, offset: 0.5 },
-      { clipPath: "inset(0 0 0 0)", opacity: 1, offset: 0.75 },
-      { clipPath: "inset(0 0 0 0)", opacity: 0 },
-    ],
-    { duration: 1200 },
-  ).finished;
-}
-
 async function nope(layer: HTMLElement): Promise<void> {
   playSound("nope");
   const first = art(ART.x1, "anim-x", layer);
@@ -350,49 +288,32 @@ async function jacket(layer: HTMLElement): Promise<void> {
   ).finished;
 }
 
-async function rec(layer: HTMLElement): Promise<void> {
-  playSound("rec");
-  for (const corner of ["tl", "tr", "bl", "br"]) art(ART.recCorner, `anim-rec-corner anim-rec-${corner}`, layer);
-  const badge = div("anim-rec-badge", layer);
-  const dot = art(ART.recDot, "anim-rec-dot", badge);
-  div("anim-rec-text", badge).textContent = STRINGS.anims.rec;
-  dot.animate([{ opacity: 1 }, { opacity: 0 }, { opacity: 1 }], { duration: 600, iterations: 3, easing: "steps(2, jump-none)" });
-  await layer.animate([{ opacity: 1 }, { opacity: 1, offset: 0.85 }, { opacity: 0 }], { duration: 1800 }).finished;
-}
-
 const ANIMS: Record<Anim, (layer: HTMLElement) => Promise<void>> = {
   pride: (layer) => wave(layer, ART.flag),
   china: (layer) => wave(layer, ART.chinaFlag),
   money,
-  door,
   receipt,
   kiss,
   coins,
   cashAway,
   siren,
   cleared,
-  crash: (layer) => chart(layer, ART.chartDown, "crash"),
-  rise: (layer) => chart(layer, ART.chartUp, "rise"),
   nope,
   shred,
   kick,
   jacket,
-  rec,
 };
 
 export function autoAnim(choice: Choice, outcome: Outcome): Anim | null {
   const stats = outcome.effects?.stats ?? {};
   const money = stats.money ?? 0;
   const feds = stats.feds ?? 0;
-  const board = stats.board ?? 0;
   if ((stats.affairs ?? 0) > 0) return "kiss";
   if (money >= BIG_MONEY) return "money";
   if (feds > 0) return "siren";
   if (money < 0) return "cashAway";
   if (money > 0) return "coins";
   if (feds < 0) return "cleared";
-  if (board < 0) return "crash";
-  if (board > 0) return "rise";
   if (choice.tone === "no") return "nope";
   return null;
 }

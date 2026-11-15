@@ -36,20 +36,16 @@ export type Anim =
   | "pride"
   | "china"
   | "money"
-  | "door"
   | "receipt"
   | "kiss"
   | "coins"
   | "cashAway"
   | "siren"
   | "cleared"
-  | "crash"
-  | "rise"
   | "nope"
   | "shred"
   | "kick"
-  | "jacket"
-  | "rec";
+  | "jacket";
 
 export interface Outcome {
   result: string;

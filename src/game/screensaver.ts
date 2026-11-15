@@ -34,86 +34,50 @@ function wingPath(rootX: number, rootY: number, angle: number): [number, number]
   return WING_SHAPE.map(([x, y]) => [rootX + x * cos - y * sin, rootY + x * sin + y * cos]);
 }
 
-export type FlyerKind = "gpu" | "cheese";
-
 type Line = { seed: number; roughness: number; bowing: number; disableMultiStroke: boolean; strokeWidth: number };
 type Rough = ReturnType<typeof rough.canvas>;
 
-const BODIES: Record<FlyerKind, { wingRoot: [number, number]; draw: (rc: Rough, line: Line, index: number) => void }> = {
-  gpu: {
-    wingRoot: [78, 62],
-    draw(rc, line, index) {
-      rc.rectangle(14, 62, 118, 38, { ...line, stroke: "#fff", fill: "#333", fillStyle: "solid" });
-      rc.line(18, 66, 128, 66, { ...line, stroke: NVIDIA_GREEN, strokeWidth: 5 });
-      rc.rectangle(130, 54, 8, 54, { ...line, stroke: "#ccc", fill: "#999", fillStyle: "solid" });
-      rc.rectangle(38, 100, 58, 7, { ...line, stroke: "#b8860b", fill: "#ffd700", fillStyle: "solid" });
-      for (const centerX of [50, 98]) {
-        const centerY = 82;
-        rc.circle(centerX, centerY, 30, { ...line, stroke: "#bbb", fill: "#111", fillStyle: "solid" });
-        for (let blade = 0; blade < 3; blade++) {
-          const spin = index * 0.7 + (blade * Math.PI * 2) / 3;
-          rc.line(centerX, centerY, centerX + Math.cos(spin) * 13, centerY + Math.sin(spin) * 13, { ...line, stroke: "#bbb", strokeWidth: 2 });
-        }
+const BODY: { wingRoot: [number, number]; draw: (rc: Rough, line: Line, index: number) => void } = {
+  wingRoot: [78, 62],
+  draw(rc, line, index) {
+    rc.rectangle(14, 62, 118, 38, { ...line, stroke: "#fff", fill: "#333", fillStyle: "solid" });
+    rc.line(18, 66, 128, 66, { ...line, stroke: NVIDIA_GREEN, strokeWidth: 5 });
+    rc.rectangle(130, 54, 8, 54, { ...line, stroke: "#ccc", fill: "#999", fillStyle: "solid" });
+    rc.rectangle(38, 100, 58, 7, { ...line, stroke: "#b8860b", fill: "#ffd700", fillStyle: "solid" });
+    for (const centerX of [50, 98]) {
+      const centerY = 82;
+      rc.circle(centerX, centerY, 30, { ...line, stroke: "#bbb", fill: "#111", fillStyle: "solid" });
+      for (let blade = 0; blade < 3; blade++) {
+        const spin = index * 0.7 + (blade * Math.PI * 2) / 3;
+        rc.line(centerX, centerY, centerX + Math.cos(spin) * 13, centerY + Math.sin(spin) * 13, { ...line, stroke: "#bbb", strokeWidth: 2 });
       }
-    },
-  },
-  cheese: {
-    wingRoot: [90, 72],
-    draw(rc, line) {
-      rc.polygon(
-        [
-          [130, 60],
-          [142, 52],
-          [142, 94],
-          [130, 104],
-        ],
-        { ...line, stroke: "#fff", fill: "#d99a00", fillStyle: "solid" },
-      );
-      rc.polygon(
-        [
-          [10, 104],
-          [130, 60],
-          [130, 104],
-        ],
-        { ...line, stroke: "#fff", fill: "#ffcc33", fillStyle: "solid" },
-      );
-      for (const [x, y, size] of [
-        [104, 88, 18],
-        [76, 95, 11],
-        [118, 72, 9],
-        [52, 99, 7],
-      ] as const) {
-        rc.circle(x, y, size, { ...line, stroke: "#b07800", fill: "#c98a00", fillStyle: "solid", strokeWidth: 2 });
-      }
-    },
+    }
   },
 };
 
-function drawFrame(kind: FlyerKind, index: number): HTMLCanvasElement {
+function drawFrame(index: number): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   const ctx = sizeCanvas(canvas, SPRITE_WIDTH, SPRITE_HEIGHT);
   ctx.translate(0, BODY_DROP);
   const rc = rough.canvas(canvas);
   const angle = FRAME_ANGLES[index]!;
   const line = { seed: index + 1, roughness: 1.6, bowing: 2, disableMultiStroke: true, strokeWidth: 3 };
-  const body = BODIES[kind];
-  const [rootX, rootY] = body.wingRoot;
+  const [rootX, rootY] = BODY.wingRoot;
 
   rc.polygon(wingPath(rootX + 10, rootY - 3, angle - 0.25), { ...line, stroke: "#888", fill: "#aaa", fillStyle: "solid" });
-  body.draw(rc, line, index);
+  BODY.draw(rc, line, index);
   rc.polygon(wingPath(rootX, rootY, angle), { ...line, stroke: "#ddd", fill: "#fff", fillStyle: "solid" });
 
   crush(ctx);
   return canvas;
 }
 
-function drawFrames(kind: FlyerKind): HTMLCanvasElement[] {
-  return FRAME_ANGLES.map((_, index) => drawFrame(kind, index));
+function drawFrames(): HTMLCanvasElement[] {
+  return FRAME_ANGLES.map((_, index) => drawFrame(index));
 }
 
 export class Screensaver {
-  private readonly sprites: Record<FlyerKind, HTMLCanvasElement[]> = { gpu: drawFrames("gpu"), cheese: drawFrames("cheese") };
-  private kind: FlyerKind = "gpu";
+  private readonly sprites = drawFrames();
   private dirty = true;
   private readonly reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   private animated = getSettings().movingBackground;
@@ -132,11 +96,6 @@ export class Screensaver {
 
   private get still(): boolean {
     return this.reducedMotion.matches || !this.animated;
-  }
-
-  setKind(kind: FlyerKind): void {
-    this.kind = kind;
-    this.dirty = true;
   }
 
   private resize(width: number, height: number): void {
@@ -184,7 +143,7 @@ export class Screensaver {
     const ctx = sizeCanvas(this.canvas, width, height);
     ctx.imageSmoothingEnabled = false;
     for (const flyer of this.flyers) {
-      ctx.drawImage(this.sprites[this.kind][flyer.phase]!, Math.round(flyer.x), Math.round(flyer.y), SPRITE_WIDTH, SPRITE_HEIGHT);
+      ctx.drawImage(this.sprites[flyer.phase]!, Math.round(flyer.x), Math.round(flyer.y), SPRITE_WIDTH, SPRITE_HEIGHT);
     }
   }
 }

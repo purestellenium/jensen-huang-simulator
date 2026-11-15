@@ -13,7 +13,6 @@ const earningsHit: Scenario = {
     {
       label: S.earningsHit.bow.label,
       result: S.earningsHit.bow.result,
-      anim: "rise",
     },
   ],
 };

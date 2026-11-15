@@ -75,6 +75,8 @@
 
 .card.newsflash {
   grid-template-columns: clamp(9rem, 30%, 18rem) 1fr;
+  height: calc(clamp(19rem, 50vh, 28rem) + 5.8rem);
+  min-height: 0;
 }
 
 .card.newsflash .portrait {
@@ -88,7 +90,6 @@
 }
 
 .card.summary .message {
-  min-height: clamp(19rem, 50vh, 28rem);
   cursor: default;
 }
 
@@ -333,48 +334,6 @@
   height: 100%;
 }
 
-.anim-handle {
-  position: absolute;
-  top: 52%;
-  right: 9%;
-  width: 0;
-  height: 0;
-}
-
-.anim-knob {
-  position: absolute;
-  left: -3.5vh;
-  top: -4.5vh;
-  width: 7vh;
-  height: 12.25vh;
-}
-
-.anim-sign {
-  position: absolute;
-  left: -9vh;
-  top: -5.7vh;
-  width: 18vh;
-  height: 36vh;
-  transform-origin: 50% 15.9%;
-  transform: translateY(-120vh);
-}
-
-.anim-sign-art {
-  width: 100%;
-  height: 100%;
-}
-
-.anim-sign-text {
-  position: absolute;
-  top: 38%;
-  left: 8%;
-  right: 8%;
-  color: #fff;
-  font: 4.6vh/1 Impact, "Arial Black", sans-serif;
-  text-align: center;
-  -webkit-text-stroke: 0.25vh #000;
-}
-
 .anim-printer {
   position: absolute;
   top: 0;
@@ -473,14 +432,6 @@
   font: 11vh/1 Impact, "Arial Black", sans-serif;
 }
 
-.anim-chart {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: min(80vw, 120vh);
-  transform: translate(-50%, -50%);
-}
-
 .anim-x {
   position: absolute;
   left: 50%;
@@ -540,51 +491,4 @@
   top: 50%;
   width: 40vh;
   transform: translate(-50%, -50%);
-}
-
-.anim-rec-corner {
-  position: absolute;
-  width: 10vh;
-}
-
-.anim-rec-tl {
-  top: calc(5.2rem + 2vh);
-  left: 3vh;
-}
-
-.anim-rec-tr {
-  top: calc(5.2rem + 2vh);
-  right: 3vh;
-  transform: rotate(90deg);
-}
-
-.anim-rec-br {
-  bottom: 3vh;
-  right: 3vh;
-  transform: rotate(180deg);
-}
-
-.anim-rec-bl {
-  bottom: 3vh;
-  left: 3vh;
-  transform: rotate(270deg);
-}
-
-.anim-rec-badge {
-  position: absolute;
-  top: calc(5.2rem + 4vh);
-  left: 8vh;
-  display: flex;
-  align-items: center;
-  gap: 1vh;
-}
-
-.anim-rec-dot {
-  width: 4vh;
-}
-
-.anim-rec-text {
-  color: #fff;
-  font: 5vh/1 Impact, "Arial Black", sans-serif;
-  -webkit-text-stroke: 0.2vh #000;
 }
