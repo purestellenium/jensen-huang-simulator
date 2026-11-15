@@ -418,7 +418,7 @@ export const STRINGS = {
       text: "An unnamed NVIDIA employee carrying things runs into you at HQ, dropping all of her things on the floor.",
       help: {
         label: "Help her, and take your time",
-        result: "You carry her boxes to the 9th floor, taking the scenic route through a supply closet with a lock you have never noticed before.",
+        result: "You carry her boxes upstairs, taking the scenic route through a supply closet you have never noticed before.",
       },
       walkPast: {
         label: "Just help her pick things up",
@@ -429,7 +429,7 @@ export const STRINGS = {
       text: "An exec at a Chinese company hits on you, and you think she's kind of hot.",
       pursue: {
         label: "Pursue",
-        result: "Exchanged compliments become dinner, and dinner turns into the hotel bar, and the hotel bar turns into several phone calls you do not remember.",
+        result: "Compliments become dinner, dinner becomes the hotel bar, and the hotel bar becomes several phone calls you do not remember.",
       },
       decline: {
         label: "Politely decline",
@@ -574,7 +574,7 @@ export const STRINGS = {
       },
       blame: {
         label: "Blame a disgruntled former employee",
-        result: "Every company has one. HR hands over a list of former employees, and a much longer list of their grievances.",
+        result: "Every company has one. HR sends a list of former employees and a longer list of their grievances.",
       },
     },
     qa: {
