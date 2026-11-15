@@ -5,20 +5,16 @@ const SOUND_URLS = {
   pop: "/audio/pop.wav",
   flag: "/audio/flag.wav",
   money: "/audio/money.wav",
-  door: "/audio/door.wav",
   receipt: "/audio/receipt.wav",
   kiss: "/audio/kiss.wav",
   coins: "/audio/coins.wav",
   cashaway: "/audio/cashaway.wav",
   siren: "/audio/siren.wav",
   stamp: "/audio/stamp.wav",
-  crash: "/audio/crash.wav",
-  rise: "/audio/rise.wav",
   nope: "/audio/nope.wav",
   shred: "/audio/shred.wav",
   kick: "/audio/kick.wav",
   jacket: "/audio/jacket.wav",
-  rec: "/audio/rec.wav",
 } as const;
 const FADE_SECONDS = 2;
 const LOOKAHEAD_SECONDS = 180;
@@ -31,20 +27,16 @@ const SOUND_LEVELS: Record<SoundName, number> = {
   pop: 0.5,
   flag: 0.35,
   money: 0.35,
-  door: 0.4,
   receipt: 0.3,
   kiss: 0.35,
   coins: 0.3,
   cashaway: 0.3,
   siren: 0.15,
   stamp: 0.35,
-  crash: 0.25,
-  rise: 0.25,
   nope: 0.25,
   shred: 0.25,
   kick: 0.4,
   jacket: 0.35,
-  rec: 0.2,
 };
 
 let context: AudioContext | null = null;

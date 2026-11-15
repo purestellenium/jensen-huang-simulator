@@ -132,9 +132,7 @@ export const STRINGS = {
   },
 
   anims: {
-    dnd: "DO NOT DISTURB",
     cleared: "CLEARED",
-    rec: "REC",
     receipt: {
       header: "DEWEY, CHEATEM & HOWE LLP",
       items: [

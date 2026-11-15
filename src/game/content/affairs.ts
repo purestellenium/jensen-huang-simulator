@@ -96,7 +96,6 @@ const podcast: Scenario = {
       label: S.podcast.yes.label,
       tone: "yes",
       result: S.podcast.yes.result,
-      anim: "rec",
       effects: { stats: { affairs: 1 }, counters: { evidence: 1 } },
     },
   ],
@@ -160,7 +159,6 @@ const trip: Scenario = {
       label: S.trip.game.label,
       tone: "yes",
       result: S.trip.game.result,
-      anim: "door",
       hint: STRINGS.hints.gossip,
       effects: {
         stats: { affairs: 1 },
