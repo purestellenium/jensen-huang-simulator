@@ -10,6 +10,8 @@ import { STRINGS } from "./strings";
 
 const JENSEN_SPRITE_URL = "/images/jensen.png";
 const JENSEN_SPRITE_HEIGHT = 1.8;
+const OUTLINE_COLOR = "#76b900";
+const OUTLINE_THICKNESS = 0.03;
 const HACKCLUB_MODEL_URL = "/models/scan.glb";
 const RESOLUTION_SCALE = 0.3;
 const POSTERIZE_LEVELS = 6;
@@ -116,6 +118,22 @@ function resize(): void {
   if (active) frameCamera(active.size);
 }
 
+function silhouette(image: HTMLImageElement, color: string): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("2d context unavailable");
+  ctx.drawImage(image, 0, 0);
+  ctx.globalCompositeOperation = "source-in";
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.magFilter = THREE.NearestFilter;
+  return texture;
+}
+
 new THREE.TextureLoader().load(
   JENSEN_SPRITE_URL,
   (texture) => {
@@ -127,6 +145,18 @@ new THREE.TextureLoader().load(
       new THREE.PlaneGeometry(planeWidth, JENSEN_SPRITE_HEIGHT),
       new THREE.MeshBasicMaterial({ map: texture, alphaTest: 0.5 }),
     );
+    const outlineMaterial = new THREE.MeshBasicMaterial({
+      map: silhouette(texture.image as HTMLImageElement, OUTLINE_COLOR),
+      alphaTest: 0.5,
+    });
+    for (const dx of [-1, 0, 1]) {
+      for (const dy of [-1, 0, 1]) {
+        if (dx === 0 && dy === 0) continue;
+        const outline = new THREE.Mesh(sprite.geometry, outlineMaterial);
+        outline.position.set(dx * OUTLINE_THICKNESS, dy * OUTLINE_THICKNESS, -0.01);
+        sprite.add(outline);
+      }
+    }
     scene.add(sprite);
     models.jensen = { object: sprite, size: new THREE.Vector3(planeWidth, JENSEN_SPRITE_HEIGHT, 0) };
     showMode(mode);
