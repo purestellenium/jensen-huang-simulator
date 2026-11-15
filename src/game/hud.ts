@@ -14,6 +14,8 @@ const SIREN_BLUE = "#2a5bff";
 const PANIC_STARS = 4;
 const STAR_GAP = 0.15;
 const TIE_PIVOT = { x: 0.78, y: 0.16 };
+const GEAR_URL = "/images/hud/settings.png";
+const GEAR_SCALE = 1.2;
 const ICONS = {
   money: "/images/hud/money.png",
   affairs: "/images/hud/affairs.png",
@@ -308,40 +310,14 @@ function drawRow(ctx: CanvasRenderingContext2D, pens: Pen[], stats: Stats, rect:
   ctx.restore();
 }
 
-export function paintGear(canvas: HTMLCanvasElement, rect: Rect): void {
-  const rc = rough.canvas(canvas);
-  const cx = rect.x + rect.width / 2;
-  const cy = rect.y + rect.height / 2;
-  const outer = Math.min(rect.width, rect.height) / 2 - 2;
-  const root = outer * 0.76;
-  const teeth = 8;
-  const step = (Math.PI * 2) / teeth;
-  const points: [number, number][] = [];
-  for (let tooth = 0; tooth < teeth; tooth++) {
-    for (const [offset, radius] of [[0, root], [0.12, outer], [0.38, outer], [0.5, root]] as const) {
-      const angle = (tooth + offset) * step;
-      points.push([cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius]);
-    }
-  }
-  rc.polygon(points, {
-    seed: 3,
-    roughness: 1.2,
-    bowing: 1,
-    disableMultiStroke: true,
-    stroke: "#fff",
-    strokeWidth: 3,
-    fill: "#9a9a9a",
-    fillStyle: "solid",
-  });
-  rc.circle(cx, cy, outer * 0.75, {
-    seed: 4,
-    roughness: 1,
-    disableMultiStroke: true,
-    stroke: "#fff",
-    strokeWidth: 3,
-    fill: "#000",
-    fillStyle: "solid",
-  });
+export function paintGear(canvas: HTMLCanvasElement, rect: Rect, repaint: () => void): void {
+  const image = imageFor(GEAR_URL, repaint);
+  if (!image) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const size = Math.max(rect.width, rect.height) * GEAR_SCALE;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(image, rect.x + (rect.width - size) / 2, rect.y + (rect.height - size) / 2, size, size);
 }
 
 export const HUD_CHIPS = { money: 0, affairs: 1, feds: 2, earnings: 3, board: 4 } as const;

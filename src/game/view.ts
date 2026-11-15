@@ -541,7 +541,7 @@ export class GameView {
       ctx.drawImage(image, 0, 0, size, size);
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    paintGear(this.hudIcons, gear);
+    paintGear(this.hudIcons, gear, () => this.paintArt());
     crush(ctx);
   }
 
