@@ -70,7 +70,7 @@
   cursor: pointer;
 }
 
-.settings-option:hover,
+:root:not(.using-controller) .settings-option:hover,
 .settings-option:focus {
   background-image: var(--art-hover);
   outline: none;

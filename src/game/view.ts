@@ -14,7 +14,7 @@ import { imageFor } from "../images";
 import { playSound } from "../audio";
 import { getSettings, textIntervalMs } from "../settings";
 import { openSettings } from "../settingsPanel";
-import { onAction } from "../input";
+import { onAction, usingController } from "../input";
 import { outlineButtonArt } from "../sketch";
 import { paintGear, paintHud, type HudIcon } from "./hud";
 import { playAnim } from "./anims";
@@ -448,8 +448,12 @@ export class GameView {
           event.stopPropagation();
           pick(index);
         });
-        button.addEventListener("mouseenter", () => setCursor(index));
-        button.addEventListener("mouseleave", () => setCursor(null));
+        button.addEventListener("mousemove", () => {
+          if (!usingController()) setCursor(index);
+        });
+        button.addEventListener("mouseleave", () => {
+          if (!usingController()) setCursor(null);
+        });
         return button;
       });
       const release = onAction((action) => {

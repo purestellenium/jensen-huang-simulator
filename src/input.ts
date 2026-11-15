@@ -18,6 +18,19 @@ const KEY_ACTIONS: Record<string, Action> = {
 };
 
 const swallowedKeys = new Set<string>();
+const CONTROLLER_CLASS = "using-controller";
+
+let controllerMode = false;
+
+function setControllerMode(on: boolean): void {
+  if (controllerMode === on) return;
+  controllerMode = on;
+  document.documentElement.classList.toggle(CONTROLLER_CLASS, on);
+}
+
+export function usingController(): boolean {
+  return controllerMode;
+}
 
 export function onAction(handler: ActionHandler): () => void {
   handlers.push(handler);
@@ -28,6 +41,7 @@ export function onAction(handler: ActionHandler): () => void {
 }
 
 export function emit(action: Action): boolean {
+  setControllerMode(true);
   for (let index = handlers.length - 1; index >= 0; index -= 1) {
     if (handlers[index]!(action)) return true;
   }
@@ -69,4 +83,7 @@ export function watchKeyboard(): void {
     { capture: true },
   );
   window.addEventListener("blur", () => swallowedKeys.clear());
+  window.addEventListener("mousemove", (event) => {
+    if (event.movementX !== 0 || event.movementY !== 0) setControllerMode(false);
+  });
 }
