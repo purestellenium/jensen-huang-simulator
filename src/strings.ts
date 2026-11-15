@@ -134,18 +134,6 @@ export const STRINGS = {
 
   anims: {
     cleared: "CLEARED",
-    receipt: {
-      header: "DEWEY, CHEATEM & HOWE LLP",
-      items: [
-        ["HELLO", "$900"],
-        ["GOODBYE", "$900"],
-        ["READING YOUR TEXTS", "$90,000"],
-        ["UNREADING YOUR TEXTS", "$250,000"],
-        ["PARTNER'S NEW BOAT", "$1,200,000"],
-        ["WHOLE FIRM x 9,398 HRS", "$8,458,200"],
-      ],
-      total: ["TOTAL", "$10,000,000"],
-    },
   },
   scenarios: {
     buyer: {

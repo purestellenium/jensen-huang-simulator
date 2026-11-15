@@ -36,7 +36,6 @@ export type Anim =
   | "pride"
   | "china"
   | "money"
-  | "receipt"
   | "kiss"
   | "coins"
   | "cashAway"

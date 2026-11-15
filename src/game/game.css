@@ -334,49 +334,6 @@
   height: 100%;
 }
 
-.anim-printer {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 46vh;
-  transform: translate(-50%, 0);
-}
-
-.anim-feed {
-  position: absolute;
-  top: 19vh;
-  bottom: 0;
-  left: 50%;
-  width: 36vh;
-  transform: translateX(-50%);
-  overflow: hidden;
-}
-
-.anim-paper {
-  display: flex;
-  flex-direction: column-reverse;
-  justify-content: space-evenly;
-  height: 120vh;
-  padding: 3vh 2.4vh;
-  box-sizing: border-box;
-  background: #fffdf4;
-  color: #111;
-  font: bold 2.3vh/1.25 "Courier New", monospace;
-  clip-path: polygon(0 1%, 10% 0, 20% 1%, 30% 0, 40% 1%, 50% 0, 60% 1%, 70% 0, 80% 1%, 90% 0, 100% 1%, 100% 99%, 90% 100%, 80% 99%, 70% 100%, 60% 99%, 50% 100%, 40% 99%, 30% 100%, 20% 99%, 10% 100%, 0 99%);
-}
-
-.anim-paper-line {
-  white-space: pre-line;
-}
-
-.anim-paper-line:first-child {
-  text-align: center;
-}
-
-.anim-paper-line:last-child {
-  font-size: 3.4vh;
-}
-
 .anim-lips {
   position: absolute;
   width: 24vh;

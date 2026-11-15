@@ -4,12 +4,11 @@ import { STRINGS } from "../strings";
 import type { Anim, Choice, Outcome } from "./types";
 
 const ART = {
-  flag: "images/anim/flag.svg",
+  flag: "images/anim/flag.png",
   chinaFlag: "images/anim/flag-china.png",
   bill: "images/anim/bill.png",
   door: "images/anim/door.svg",
   frame: "images/anim/frame.svg",
-  printer: "images/anim/printer.svg",
   lips: "images/hud/affairs.png",
   coin: "images/anim/coin.png",
   x1: "images/anim/x1.svg",
@@ -18,7 +17,7 @@ const ART = {
   sirenBlue: "images/anim/siren-blue.svg",
   stamp: "images/anim/stamp.svg",
   jacket: "images/anim/jacket.png",
-  shredder: "images/anim/shredder.svg",
+  shredder: "images/anim/shredder.png",
   sheet: "images/anim/sheet.svg",
 } as const;
 
@@ -27,12 +26,6 @@ const COIN_COUNT = 9;
 const FLYING_BILLS = 7;
 const STRIP_COUNT = 10;
 const BIG_MONEY = 10;
-const FEED_BURSTS: [number, number][] = [
-  [300, 850],
-  [1000, 1550],
-  [1700, 2200],
-];
-const TEAR_MS = 2300;
 
 function art(src: string, className: string, parent: HTMLElement): HTMLImageElement {
   const image = new Image();
@@ -86,41 +79,6 @@ async function money(layer: HTMLElement): Promise<void> {
     ).finished;
   });
   await Promise.all(falls);
-}
-
-async function receipt(layer: HTMLElement): Promise<void> {
-  playSound("receipt");
-  const S = STRINGS.anims.receipt;
-  const feed = div("anim-feed", layer);
-  const paper = div("anim-paper", feed);
-  const lines = [S.header, ...S.items.map(([item, cost]) => `${item}\n${cost}`), `${S.total[0]}\n${S.total[1]}`];
-  for (const line of lines) div("anim-paper-line", paper).textContent = line;
-  const printer = art(ART.printer, "anim-printer", layer);
-
-  printer.animate([{ transform: "translate(-50%, -110%)" }, { transform: "translate(-50%, 0)" }], {
-    duration: 220,
-    easing: "ease-out",
-  });
-  const stops: Keyframe[] = [{ transform: "translateY(-100%)", offset: 0 }];
-  FEED_BURSTS.forEach(([start, end], index) => {
-    const from = -100 + (100 / FEED_BURSTS.length) * index;
-    const to = -100 + (100 / FEED_BURSTS.length) * (index + 1);
-    stops.push({ transform: `translateY(${from}%)`, offset: start / TEAR_MS });
-    stops.push({ transform: `translateY(${to}%)`, offset: end / TEAR_MS });
-  });
-  stops.push({ transform: "translateY(0%)", offset: 1 });
-  await paper.animate(stops, { duration: TEAR_MS }).finished;
-  printer.animate([{ transform: "translate(-50%, 0)" }, { transform: "translate(-50%, -110%)" }], {
-    duration: 300,
-    delay: 400,
-    easing: "ease-in",
-    fill: "forwards",
-  });
-  await paper.animate([{ transform: "translateY(0) rotate(0deg)" }, { transform: "translateY(110vh) rotate(9deg)" }], {
-    duration: 700,
-    easing: "ease-in",
-    fill: "forwards",
-  }).finished;
 }
 
 async function kiss(layer: HTMLElement): Promise<void> {
@@ -293,7 +251,6 @@ const ANIMS: Record<Anim, (layer: HTMLElement) => Promise<void>> = {
   pride: (layer) => wave(layer, ART.flag),
   china: (layer) => wave(layer, ART.chinaFlag),
   money,
-  receipt,
   kiss,
   coins,
   cashAway,
