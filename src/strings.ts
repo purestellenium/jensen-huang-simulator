@@ -124,12 +124,8 @@ export const STRINGS = {
 
   identities: {
     original: "Jensen Huang",
-    beard: "Hensen Juang",
-    detective: "Hensen Juang",
-    blonde: "Hensen Juang",
-    monopoly: "Hensen Juang",
-    mustache: "Hensen Juang",
-    propeller: "Hensen Juang",
+    blonde: "Donald Huang",
+    aliases: ["Hensen Juang", "Bensen Buang", "Pete Huangsen", "Cisco Huallace", "Sam Huangman", "Jenin Huangnin"],
   },
 
   anims: {

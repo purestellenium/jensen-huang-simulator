@@ -7,27 +7,32 @@ export interface Identity {
 
 const ORIGINAL: Identity = { name: STRINGS.identities.original, image: "images/identities/jensen.png" };
 
-const DISGUISES: Identity[] = (["beard", "detective", "blonde", "monopoly", "mustache", "propeller"] as const).map((id) => ({
-  name: STRINGS.identities[id],
-  image: `images/identities/${id}.png`,
-}));
+const DISGUISE_IDS = ["beard", "detective", "blonde", "monopoly", "mustache", "propeller"] as const;
+const imageOf = (id: string) => `images/identities/${id}.png`;
 
 let current: Identity = ORIGINAL;
-let unused: Identity[] = [];
+let unusedDisguises: string[] = [];
+let unusedAliases: string[] = [];
+
+function draw<T>(bag: T[], refill: () => T[], avoid?: T): T {
+  if (bag.length === 0) bag.push(...refill());
+  const options = bag.filter((item) => item !== avoid);
+  const picked = (options.length > 0 ? options : bag)[Math.floor(Math.random() * (options.length > 0 ? options : bag).length)]!;
+  bag.splice(bag.indexOf(picked), 1);
+  return picked;
+}
 
 export function currentIdentity(): Identity {
   return current;
 }
 
 export function nextIdentity(): Identity {
-  if (unused.length === 0) unused = [...DISGUISES];
-  const options = unused.filter((identity) => identity !== current);
-  const picked = options[Math.floor(Math.random() * options.length)]!;
-  unused.splice(unused.indexOf(picked), 1);
-  current = picked;
+  const id = draw(unusedDisguises, () => [...DISGUISE_IDS], DISGUISE_IDS.find((disguise) => imageOf(disguise) === current.image));
+  const name = id === "blonde" ? STRINGS.identities.blonde : draw(unusedAliases, () => [...STRINGS.identities.aliases], current.name);
+  current = { name, image: imageOf(id) };
   return current;
 }
 
 export function allIdentityImages(): string[] {
-  return [ORIGINAL, ...DISGUISES].map((identity) => identity.image);
+  return [ORIGINAL.image, ...DISGUISE_IDS.map(imageOf)];
 }

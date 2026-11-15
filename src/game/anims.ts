@@ -18,7 +18,7 @@ const ART = {
   stamp: "images/anim/stamp.svg",
   jacket: "images/anim/jacket.png",
   shredder: "images/anim/shredder.png",
-  sheet: "images/anim/sheet.svg",
+  sheet: "images/anim/sheet.png",
 } as const;
 
 const BILL_COUNT = 36;
