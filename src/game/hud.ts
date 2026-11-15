@@ -14,13 +14,13 @@ const SIREN_BLUE = "#2a5bff";
 const PANIC_STARS = 4;
 const STAR_GAP = 0.15;
 const TIE_PIVOT = { x: 0.78, y: 0.16 };
-const GEAR_URL = "/images/hud/settings.png";
+const GEAR_URL = "images/hud/settings.png";
 const GEAR_SCALE = 1.2;
 const ICONS = {
-  money: "/images/hud/money.png",
-  affairs: "/images/hud/affairs.png",
-  feds: "/images/hud/feds.png",
-  board: "/images/hud/board.png",
+  money: "images/hud/money.png",
+  affairs: "images/hud/affairs.png",
+  feds: "images/hud/feds.png",
+  board: "images/hud/board.png",
 };
 
 interface Rect {

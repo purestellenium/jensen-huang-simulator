@@ -4,22 +4,22 @@ import { STRINGS } from "../strings";
 import type { Anim, Choice, Outcome } from "./types";
 
 const ART = {
-  flag: "/images/anim/flag.svg",
-  chinaFlag: "/images/anim/flag-china.png",
-  bill: "/images/anim/bill.png",
-  door: "/images/anim/door.svg",
-  frame: "/images/anim/frame.svg",
-  printer: "/images/anim/printer.svg",
-  lips: "/images/hud/affairs.png",
-  coin: "/images/anim/coin.png",
-  x1: "/images/anim/x1.svg",
-  x2: "/images/anim/x2.svg",
-  sirenRed: "/images/anim/siren-red.svg",
-  sirenBlue: "/images/anim/siren-blue.svg",
-  stamp: "/images/anim/stamp.svg",
-  jacket: "/images/anim/jacket.png",
-  shredder: "/images/anim/shredder.svg",
-  sheet: "/images/anim/sheet.svg",
+  flag: "images/anim/flag.svg",
+  chinaFlag: "images/anim/flag-china.png",
+  bill: "images/anim/bill.png",
+  door: "images/anim/door.svg",
+  frame: "images/anim/frame.svg",
+  printer: "images/anim/printer.svg",
+  lips: "images/hud/affairs.png",
+  coin: "images/anim/coin.png",
+  x1: "images/anim/x1.svg",
+  x2: "images/anim/x2.svg",
+  sirenRed: "images/anim/siren-red.svg",
+  sirenBlue: "images/anim/siren-blue.svg",
+  stamp: "images/anim/stamp.svg",
+  jacket: "images/anim/jacket.png",
+  shredder: "images/anim/shredder.svg",
+  sheet: "images/anim/sheet.svg",
 } as const;
 
 const BILL_COUNT = 36;

@@ -3,7 +3,7 @@ import { getSettings, onSettingsChange } from "../settings";
 
 const SPRITE_WIDTH = 170;
 const SPRITE_HEIGHT = 145;
-const FRAME_URLS = [1, 2, 3, 4].map((frame) => `/images/gpu/frame${frame}.png`);
+const FRAME_URLS = [1, 2, 3, 4].map((frame) => `images/gpu/frame${frame}.png`);
 const TICK_MS = 90;
 const AREA_PER_GPU = 70000;
 interface Flyer {

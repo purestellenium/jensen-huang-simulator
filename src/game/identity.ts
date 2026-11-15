@@ -5,11 +5,11 @@ export interface Identity {
   image: string;
 }
 
-const ORIGINAL: Identity = { name: STRINGS.identities.original, image: "/images/identities/jensen.png" };
+const ORIGINAL: Identity = { name: STRINGS.identities.original, image: "images/identities/jensen.png" };
 
 const DISGUISES: Identity[] = (["beard", "detective", "blonde", "monopoly", "mustache", "propeller"] as const).map((id) => ({
   name: STRINGS.identities[id],
-  image: `/images/identities/${id}.png`,
+  image: `images/identities/${id}.png`,
 }));
 
 let current: Identity = ORIGINAL;

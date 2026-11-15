@@ -12,7 +12,7 @@ import { onAction, watchKeyboard } from "./input";
 import { Screensaver } from "./game/screensaver";
 import { STRINGS } from "./strings";
 
-const JENSEN_SPRITE_URL = "/images/jensen.png";
+const JENSEN_SPRITE_URL = "images/jensen.png";
 const JENSEN_SPRITE_HEIGHT = 1.8;
 const OUTLINE_COLOR = "#76b900";
 const OUTLINE_THICKNESS = 0.03;

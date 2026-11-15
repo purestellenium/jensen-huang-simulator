@@ -1,20 +1,20 @@
 import { getSettings, musicGain, onSettingsChange, sfxGain } from "./settings";
 
-const BGM_URL = "/audio/bgm.m4a";
+const BGM_URL = "audio/bgm.m4a";
 const SOUND_URLS = {
-  pop: "/audio/pop.wav",
-  flag: "/audio/flag.wav",
-  money: "/audio/money.wav",
-  receipt: "/audio/receipt.wav",
-  kiss: "/audio/kiss.wav",
-  coins: "/audio/coins.wav",
-  cashaway: "/audio/cashaway.wav",
-  siren: "/audio/siren.wav",
-  stamp: "/audio/stamp.wav",
-  nope: "/audio/nope.wav",
-  shred: "/audio/shred.wav",
-  kick: "/audio/kick.wav",
-  jacket: "/audio/jacket.wav",
+  pop: "audio/pop.wav",
+  flag: "audio/flag.wav",
+  money: "audio/money.wav",
+  receipt: "audio/receipt.wav",
+  kiss: "audio/kiss.wav",
+  coins: "audio/coins.wav",
+  cashaway: "audio/cashaway.wav",
+  siren: "audio/siren.wav",
+  stamp: "audio/stamp.wav",
+  nope: "audio/nope.wav",
+  shred: "audio/shred.wav",
+  kick: "audio/kick.wav",
+  jacket: "audio/jacket.wav",
 } as const;
 const FADE_SECONDS = 2;
 const LOOKAHEAD_SECONDS = 180;
