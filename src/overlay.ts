@@ -204,7 +204,7 @@ function drawTitle(canvas: HTMLCanvasElement, theme: Theme): void {
       link.style.left = `${cursor}px`;
       link.style.top = `${bylineY - bylineSize * 0.85}px`;
       link.style.width = `${advance}px`;
-      link.style.height = `${bylineSize * 1.05}px`;
+      link.style.height = `${bylineSize * 0.92}px`;
       credits.append(link);
     }
     cursor += advance;

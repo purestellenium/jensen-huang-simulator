@@ -9,7 +9,7 @@ const ART = {
   door: "/images/anim/door.svg",
   frame: "/images/anim/frame.svg",
   printer: "/images/anim/printer.svg",
-  lips: "/images/anim/lips.svg",
+  lips: "/images/hud/affairs.png",
   coin: "/images/anim/coin.svg",
   x1: "/images/anim/x1.svg",
   x2: "/images/anim/x2.svg",
