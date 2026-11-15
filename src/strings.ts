@@ -346,6 +346,7 @@ export const STRINGS = {
         "Dana wants to match! Her bio says: \"Seeking a man with great jackets and no commitments.\"",
         "Priya wants to match! Her bio says: \"I don't care about the stock price. (I do.)\"",
         "Camille wants to match! Her bio says: \"Fluent in CUDA. Fluent in other things.\"",
+        "Kyle, 34, wants to match! His bio says: \"Looking for someone who understands CUDA.\"",
       ],
       yes: {
         label: "Swipe right",

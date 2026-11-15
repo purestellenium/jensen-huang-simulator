@@ -34,7 +34,7 @@ const matches: Scenario[] = S.matches.texts.map(
     id: `dating-match-${index + 1}`,
     app: "dating",
     contact: "spy",
-    weight: jacketWeight(0.35),
+    weight: jacketWeight(0.2625),
     text,
     choices: [
       {
