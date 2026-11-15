@@ -416,11 +416,11 @@ export class GameView {
     return new Promise<Choice>((resolve) => {
       let cursor: number | null = null;
       const enabled = (index: number) => this.choiceButtons[index]?.disabled === false;
-      const setCursor = (index: number) => {
-        if (cursor === index || !enabled(index)) return;
+      const setCursor = (index: number | null) => {
+        if (cursor === index || (index !== null && !enabled(index))) return;
         cursor = index;
         this.choiceButtons.forEach((button, other) => button.classList.toggle("is-cursor", other === index));
-        this.paintPreview(choicePreview(options[index]!));
+        this.paintPreview(index === null ? [] : choicePreview(options[index]!));
       };
       const firstEnabled = (from: number, step: 1 | -1): number | null => {
         for (let index = from; index >= 0 && index < options.length; index += step) if (enabled(index)) return index;
@@ -449,12 +449,14 @@ export class GameView {
           pick(index);
         });
         button.addEventListener("mouseenter", () => setCursor(index));
+        button.addEventListener("mouseleave", () => setCursor(null));
         return button;
       });
       const release = onAction((action) => {
         if (action.kind === "left" || action.kind === "right") moveCursor(action.kind);
         else if (action.kind === "confirm") {
-          if (cursor !== null) pick(cursor);
+          const target = cursor ?? (options.length === 1 ? 0 : null);
+          if (target !== null) pick(target);
         } else if (action.kind === "pick") pick(action.index);
         else return false;
         return true;
