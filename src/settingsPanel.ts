@@ -28,13 +28,6 @@ const ROWS: Row[] = [
     label: () => `${S.background}: ${getSettings().movingBackground ? S.on : S.off}`,
     press: () => updateSettings({ movingBackground: !getSettings().movingBackground }),
   },
-  {
-    label: () => `${S.fullscreen}: ${document.fullscreenElement ? S.on : S.off}`,
-    press: () => {
-      if (document.fullscreenElement) void document.exitFullscreen();
-      else void document.documentElement.requestFullscreen();
-    },
-  },
 ];
 
 type VolumeKey = "musicVolume" | "sfxVolume";
@@ -201,9 +194,6 @@ function build(): Built {
   });
   onSettingsChange(() => {
     if (!panel.hidden) paintControls();
-  });
-  document.addEventListener("fullscreenchange", () => {
-    if (!panel.hidden) paint();
   });
 
   return { panel, card, art, sliders, mute, rows, back };

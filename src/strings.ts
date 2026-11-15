@@ -68,7 +68,6 @@ export const STRINGS = {
     textSpeed: "Text speed",
     speeds: { slow: "Slow", normal: "Normal", fast: "Fast", instant: "Instant" },
     background: "Moving background",
-    fullscreen: "Fullscreen",
     on: "On",
     off: "Off",
   },
