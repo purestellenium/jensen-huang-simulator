@@ -192,7 +192,7 @@ watchGamepads();
 
 const releaseTitle = onAction((action) => {
   if (action.kind === "confirm") (document.activeElement === settingsButton ? settingsButton : startButton).click();
-  else if (action.kind === "back") openSettings(settingsButton);
+  else if (action.kind === "menu") openSettings(settingsButton);
   else if (action.kind === "up") startButton.focus();
   else if (action.kind === "down") settingsButton.focus();
   else return false;

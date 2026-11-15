@@ -1,4 +1,5 @@
 import { playSound } from "../audio";
+import { onAction } from "../input";
 import { STRINGS } from "../strings";
 import type { Anim, Choice, Outcome } from "./types";
 
@@ -322,12 +323,22 @@ export function preloadAnimArt(): void {
   for (const src of Object.values(ART)) new Image().src = src;
 }
 
-export async function playAnim(root: HTMLElement, kind: Anim): Promise<void> {
+export async function playAnim(root: HTMLElement, kind: Anim, skippable: boolean): Promise<void> {
   const layer = div(`anim anim-${kind}`, root);
   layer.setAttribute("aria-hidden", "true");
+  let release = () => {};
+  const skipped = new Promise<void>((resolve) => {
+    if (!skippable) return;
+    release = onAction((action) => {
+      if (action.kind !== "back") return false;
+      resolve();
+      return true;
+    });
+  });
   try {
-    await ANIMS[kind](layer);
+    await Promise.race([ANIMS[kind](layer), skipped]);
   } finally {
+    release();
     layer.remove();
   }
 }

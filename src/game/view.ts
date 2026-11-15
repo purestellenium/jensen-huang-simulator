@@ -155,6 +155,7 @@ export class GameView {
   private scribble: Scribble | null = null;
   private choiceButtons: HTMLButtonElement[] = [];
   private skipTyping: (() => void) | null = null;
+  private instantNext = false;
 
   constructor(private readonly root: HTMLElement) {
     root.replaceChildren();
@@ -209,7 +210,7 @@ export class GameView {
       this.skipTyping();
     });
     onAction((action) => {
-      if (action.kind !== "back") return false;
+      if (action.kind !== "menu") return false;
       openSettings(this.gearButton);
       return true;
     });
@@ -254,8 +255,8 @@ export class GameView {
     this.paintArt();
   }
 
-  animate(kind: Anim): Promise<void> {
-    return playAnim(this.root, kind);
+  animate(kind: Anim, skippable = false): Promise<void> {
+    return playAnim(this.root, kind, skippable);
   }
 
   showNewsflash(identity: Identity, bannered = true): void {
@@ -351,7 +352,8 @@ export class GameView {
     this.clearChoices();
     this.paintText();
 
-    const interval = textIntervalMs(getSettings().textSpeed);
+    const interval = this.instantNext ? 0 : textIntervalMs(getSettings().textSpeed);
+    this.instantNext = false;
     if (interval === 0) {
       this.shown = line.length;
       this.paintText();
@@ -380,7 +382,7 @@ export class GameView {
       }, interval);
       this.skipTyping = finish;
       const release = onAction((action) => {
-        if (action.kind !== "confirm") return false;
+        if (action.kind !== "confirm" && action.kind !== "back") return false;
         finish();
         return true;
       });
@@ -399,7 +401,8 @@ export class GameView {
       };
       this.root.addEventListener("click", done);
       const release = onAction((action) => {
-        if (action.kind !== "confirm") return false;
+        if (action.kind !== "confirm" && action.kind !== "back") return false;
+        if (action.kind === "back") this.instantNext = true;
         done();
         return true;
       });

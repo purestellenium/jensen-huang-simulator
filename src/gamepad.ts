@@ -7,6 +7,7 @@ const REPEAT_INTERVAL_MS = 140;
 
 const BUTTON_BOTTOM = 0;
 const BUTTON_RIGHT = 1;
+const BUTTON_TOP = 3;
 const STANDARD_DPAD: [Direction, number][] = [
   ["up", 12],
   ["down", 13],
@@ -21,7 +22,7 @@ const NONSTANDARD_STICK_X = 4;
 const HAT_STEPS = 8;
 const HAT_DIRECTIONS: Direction[][] = [["up"], ["up", "right"], ["right"], ["down", "right"], ["down"], ["down", "left"], ["left"], ["up", "left"]];
 
-type Control = Direction | "confirm" | "back";
+type Control = Direction | "confirm" | "back" | "menu";
 
 interface PadState {
   held: Set<Control>;
@@ -31,7 +32,7 @@ interface PadState {
 const pads = new Map<number, PadState>();
 
 function isDirection(control: Control): control is Direction {
-  return control !== "confirm" && control !== "back";
+  return control !== "confirm" && control !== "back" && control !== "menu";
 }
 
 function hatDirections(value: number | undefined): Direction[] {
@@ -57,6 +58,7 @@ function readControls(pad: Gamepad, previous: Set<Control>): Set<Control> {
   const heldY = previous.has("up") || previous.has("down");
   if (pressed(BUTTON_RIGHT)) controls.add("confirm");
   if (pressed(BUTTON_BOTTOM)) controls.add("back");
+  if (pressed(BUTTON_TOP)) controls.add("menu");
   if (pad.mapping === "standard") {
     for (const [direction, index] of STANDARD_DPAD) if (pressed(index)) controls.add(direction);
     add(stickDirection(pad.axes[STANDARD_STICK_X], heldX, "left", "right"));

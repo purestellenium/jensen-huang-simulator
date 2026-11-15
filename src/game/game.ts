@@ -62,8 +62,8 @@ export async function startGame(root: HTMLElement): Promise<void> {
       if (takeDevEnd()) state.loss = state.loss ?? "board";
       view.updateStats(state);
       if (outcome.anim) {
-        if ((outcome.effects?.stats?.affairs ?? 0) > 0) await view.animate("kiss");
-        await view.animate(outcome.anim);
+        if ((outcome.effects?.stats?.affairs ?? 0) > 0) await view.animate("kiss", true);
+        await view.animate(outcome.anim, true);
       } else {
         const auto = autoAnim(choice, outcome);
         if (auto) void view.animate(auto);

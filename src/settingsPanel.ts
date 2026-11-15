@@ -74,7 +74,7 @@ function handleAction(action: Action): boolean {
   const list = controls(built);
   const focused = list.indexOf(document.activeElement as HTMLElement);
   const slider = built.sliders.find(({ slider }) => slider === document.activeElement);
-  if (action.kind === "back") closeSettings();
+  if (action.kind === "back" || action.kind === "menu") closeSettings();
   else if (action.kind === "up" || action.kind === "down") {
     const step = action.kind === "down" ? 1 : -1;
     const next = focused === -1 ? 0 : Math.min(list.length - 1, Math.max(0, focused + step));

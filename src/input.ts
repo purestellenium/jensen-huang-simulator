@@ -1,6 +1,6 @@
 export type Direction = "left" | "right" | "up" | "down";
 
-export type Action = { kind: Direction } | { kind: "confirm" } | { kind: "back" } | { kind: "pick"; index: number };
+export type Action = { kind: Direction } | { kind: "confirm" } | { kind: "back" } | { kind: "menu" } | { kind: "pick"; index: number };
 
 export type ActionHandler = (action: Action) => boolean;
 
@@ -14,7 +14,7 @@ const KEY_ACTIONS: Record<string, Action> = {
   " ": { kind: "confirm" },
   Enter: { kind: "confirm" },
   Backspace: { kind: "back" },
-  Escape: { kind: "back" },
+  Escape: { kind: "menu" },
 };
 
 const swallowedKeys = new Set<string>();
