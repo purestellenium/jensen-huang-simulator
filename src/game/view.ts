@@ -487,7 +487,7 @@ export class GameView {
   private colorFor(tone: Tone): string {
     if (tone === "yes") return YES_COLOR;
     if (tone === "no") return NO_COLOR;
-    return this.activeApp ? APPS[this.activeApp].color : "#fff";
+    return this.activeApp ? APPS[this.activeApp].neutral : "#fff";
   }
 
   private paintChoices(): void {
