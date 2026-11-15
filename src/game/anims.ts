@@ -5,7 +5,7 @@ import type { Anim, Choice, Outcome } from "./types";
 
 const ART = {
   flag: "/images/anim/flag.svg",
-  chinaFlag: "/images/anim/flag-china.svg",
+  chinaFlag: "/images/anim/flag-china.png",
   bill: "/images/anim/bill.png",
   door: "/images/anim/door.svg",
   frame: "/images/anim/frame.svg",
