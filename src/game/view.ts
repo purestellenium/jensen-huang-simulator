@@ -13,7 +13,8 @@ import {
 import { imageFor } from "../images";
 import { playSound } from "../audio";
 import { getSettings, textIntervalMs } from "../settings";
-import { isSettingsOpen, openSettings } from "../settingsPanel";
+import { openSettings } from "../settingsPanel";
+import { onAction } from "../input";
 import { outlineButtonArt } from "../sketch";
 import { paintGear, paintHud, type HudIcon } from "./hud";
 import { playAnim } from "./anims";
@@ -207,17 +208,10 @@ export class GameView {
       event.stopPropagation();
       this.skipTyping();
     });
-    window.addEventListener("keydown", (event) => {
-      if (isSettingsOpen() || event.defaultPrevented) return;
-      if (event.key === "Backspace" && !event.repeat) {
-        event.preventDefault();
-        openSettings(this.gearButton);
-        return;
-      }
-      if (this.skipTyping && (event.key === " " || event.key === "Enter")) {
-        event.preventDefault();
-        this.skipTyping();
-      }
+    onAction((action) => {
+      if (action.kind !== "back") return false;
+      openSettings(this.gearButton);
+      return true;
     });
     window.addEventListener("resize", () => this.paintAll());
     this.openApp(null);
@@ -367,6 +361,7 @@ export class GameView {
     await new Promise<void>((resolve) => {
       const finish = () => {
         clearInterval(timer);
+        release();
         this.skipTyping = null;
         this.shown = line.length;
         this.paintText();
@@ -384,6 +379,11 @@ export class GameView {
         if (this.shown >= line.length) finish();
       }, interval);
       this.skipTyping = finish;
+      const release = onAction((action) => {
+        if (action.kind !== "confirm") return false;
+        finish();
+        return true;
+      });
     });
   }
 
@@ -392,21 +392,17 @@ export class GameView {
     this.paintCue();
     await new Promise<void>((resolve) => {
       const done = () => {
-        this.root.removeEventListener("click", onClick);
-        window.removeEventListener("keydown", onKey);
+        this.root.removeEventListener("click", done);
+        release();
         this.cue.hidden = true;
         resolve();
       };
-      const onClick = () => done();
-      const onKey = (event: KeyboardEvent) => {
-        if (isSettingsOpen()) return;
-        if (event.key === " " || event.key === "Enter") {
-          event.preventDefault();
-          done();
-        }
-      };
-      this.root.addEventListener("click", onClick);
-      window.addEventListener("keydown", onKey);
+      this.root.addEventListener("click", done);
+      const release = onAction((action) => {
+        if (action.kind !== "confirm") return false;
+        done();
+        return true;
+      });
     });
   }
 
@@ -418,64 +414,52 @@ export class GameView {
   async choose(state: GameState, options: Choice[]): Promise<Choice> {
     this.clearChoices();
     return new Promise<Choice>((resolve) => {
-      const pick = (choice: Choice) => {
-        window.removeEventListener("keydown", onKey);
-        this.clearChoices();
-        resolve(choice);
-      };
       let cursor: number | null = null;
+      const enabled = (index: number) => this.choiceButtons[index]?.disabled === false;
       const setCursor = (index: number) => {
-        if (cursor === index) return;
+        if (cursor === index || !enabled(index)) return;
         cursor = index;
         this.choiceButtons.forEach((button, other) => button.classList.toggle("is-cursor", other === index));
         this.paintPreview(choicePreview(options[index]!));
-        this.choiceButtons[index]?.focus({ preventScroll: true });
+      };
+      const firstEnabled = (from: number, step: 1 | -1): number | null => {
+        for (let index = from; index >= 0 && index < options.length; index += step) if (enabled(index)) return index;
+        return null;
+      };
+      const moveCursor = (direction: "left" | "right") => {
+        const step = direction === "right" ? 1 : -1;
+        const target = cursor === null ? firstEnabled(direction === "right" ? options.length - 1 : 0, step === 1 ? -1 : 1) : firstEnabled(cursor + step, step);
+        if (target !== null) setCursor(target);
+      };
+      const pick = (index: number) => {
+        if (!enabled(index)) return;
+        release();
+        this.clearChoices();
+        resolve(options[index]!);
       };
       this.choiceButtons = options.map((choice, index) => {
         const button = el("button", "choice", this.choices);
         button.type = "button";
+        button.tabIndex = -1;
         button.dataset.tone = choice.tone ?? "neutral";
         button.textContent = choice.label;
-        const available = choiceAvailable(state, choice);
-        button.disabled = !available;
-        if (available) {
-          button.addEventListener("click", (event) => {
-            event.stopPropagation();
-            pick(choice);
-          });
-          button.addEventListener("mouseenter", () => setCursor(index));
-          button.addEventListener("focus", () => setCursor(index));
-        }
+        button.disabled = !choiceAvailable(state, choice);
+        button.addEventListener("click", (event) => {
+          event.stopPropagation();
+          pick(index);
+        });
+        button.addEventListener("mouseenter", () => setCursor(index));
         return button;
       });
-      const moveCursor = (step: 1 | -1) => {
-        const from = cursor ?? (step === 1 ? -1 : options.length);
-        for (let index = from + step; index >= 0 && index < options.length; index += step) {
-          const button = this.choiceButtons[index];
-          if (button && !button.disabled) {
-            setCursor(index);
-            return;
-          }
-        }
-      };
-      const onKey = (event: KeyboardEvent) => {
-        if (isSettingsOpen()) return;
-        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-          event.preventDefault();
-          moveCursor(event.key === "ArrowRight" ? 1 : -1);
-          return;
-        }
-        if (event.repeat) return;
-        if (event.key === " " || event.key === "Enter") {
-          event.preventDefault();
-          if (cursor !== null) this.choiceButtons[cursor]?.click();
-          return;
-        }
-        const number = Number(event.key);
-        if (Number.isInteger(number) && number >= 1 && number <= options.length) this.choiceButtons[number - 1]?.click();
-      };
-      window.addEventListener("keydown", onKey);
-      if (options.length === 1) moveCursor(1);
+      const release = onAction((action) => {
+        if (action.kind === "left" || action.kind === "right") moveCursor(action.kind);
+        else if (action.kind === "confirm") {
+          if (cursor !== null) pick(cursor);
+        } else if (action.kind === "pick") pick(action.index);
+        else return false;
+        return true;
+      });
+      if (options.length === 1) setCursor(0);
       this.paintChoices();
       this.paintArt();
       this.paintText();

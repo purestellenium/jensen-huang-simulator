@@ -38,7 +38,7 @@
   user-select: none;
 }
 
-.settings-slider:focus-visible {
+.settings-slider:focus {
   outline: 3px solid #fff;
   outline-offset: 4px;
 }
@@ -71,7 +71,7 @@
 }
 
 .settings-option:hover,
-.settings-option:focus-visible {
+.settings-option:focus {
   background-image: var(--art-hover);
   outline: none;
 }

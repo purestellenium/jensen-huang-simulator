@@ -4,6 +4,7 @@ import { playSound } from "./audio";
 import { TEXT_SPEEDS, VOLUME_STEP, getSettings, nextValue, onSettingsChange, updateSettings } from "./settings";
 import { outlineButtonArt } from "./sketch";
 import { STRINGS } from "./strings";
+import { onAction, type Action } from "./input";
 import "./settings.css";
 
 const S = STRINGS.settings;
@@ -62,6 +63,30 @@ interface Built {
 
 let built: Built | null = null;
 let opener: HTMLElement | null = null;
+let releaseActions: (() => void) | null = null;
+
+function controls(panel: Built): HTMLElement[] {
+  return [panel.sliders[0]!.slider, panel.mute, panel.sliders[1]!.slider, ...panel.rows.map(({ button }) => button), panel.back];
+}
+
+function handleAction(action: Action): boolean {
+  if (!built) return false;
+  const list = controls(built);
+  const focused = list.indexOf(document.activeElement as HTMLElement);
+  const slider = built.sliders.find(({ slider }) => slider === document.activeElement);
+  if (action.kind === "back") closeSettings();
+  else if (action.kind === "up" || action.kind === "down") {
+    const step = action.kind === "down" ? 1 : -1;
+    const next = focused === -1 ? 0 : Math.min(list.length - 1, Math.max(0, focused + step));
+    list[next]!.focus();
+  } else if ((action.kind === "left" || action.kind === "right") && slider) {
+    const step = action.kind === "right" ? VOLUME_STEP : -VOLUME_STEP;
+    setVolume(slider.spec, getSettings()[slider.spec.key] + step);
+  } else if (action.kind === "confirm" && document.activeElement instanceof HTMLButtonElement && list.includes(document.activeElement)) {
+    document.activeElement.click();
+  }
+  return true;
+}
 
 function option(parent: HTMLElement): HTMLButtonElement {
   const button = document.createElement("button");
@@ -102,14 +127,7 @@ function wireSlider(spec: SliderSpec, slider: HTMLElement): void {
   slider.addEventListener("pointercancel", release);
   slider.addEventListener("keydown", (event) => {
     const current = getSettings()[spec.key];
-    const targets: Record<string, number> = {
-      ArrowLeft: current - VOLUME_STEP,
-      ArrowDown: current - VOLUME_STEP,
-      ArrowRight: current + VOLUME_STEP,
-      ArrowUp: current + VOLUME_STEP,
-      Home: 0,
-      End: 100,
-    };
+    const targets: Record<string, number> = { Home: 0, End: 100 };
     const next = targets[event.key];
     if (next === undefined) return;
     event.preventDefault();
@@ -170,12 +188,6 @@ function build(): Built {
   back.addEventListener("click", closeSettings);
   panel.addEventListener("click", (event) => {
     if (event.target === panel) closeSettings();
-  });
-  window.addEventListener("keydown", (event) => {
-    if ((event.key === "Escape" || event.key === "Backspace") && !panel.hidden) {
-      event.preventDefault();
-      closeSettings();
-    }
   });
   window.addEventListener("resize", () => {
     if (!panel.hidden) paint();
@@ -294,6 +306,8 @@ export function openSettings(from: HTMLElement): void {
   built ??= build();
   opener = from;
   built.panel.hidden = false;
+  releaseActions?.();
+  releaseActions = onAction(handleAction);
   paint();
   built.sliders[0]!.slider.focus();
 }
@@ -301,5 +315,7 @@ export function openSettings(from: HTMLElement): void {
 export function closeSettings(): void {
   if (!built) return;
   built.panel.hidden = true;
+  releaseActions?.();
+  releaseActions = null;
   opener?.focus();
 }

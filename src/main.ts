@@ -6,9 +6,10 @@ import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { startMusic, unlockMusic } from "./audio";
 import { startOverlay, type Mode } from "./overlay";
-import { isSettingsOpen, openSettings } from "./settingsPanel";
+import { openSettings } from "./settingsPanel";
 import { startGame } from "./game/game";
 import { watchGamepads } from "./gamepad";
+import { onAction, watchKeyboard } from "./input";
 import { Screensaver } from "./game/screensaver";
 import { STRINGS } from "./strings";
 
@@ -226,21 +227,20 @@ new GLTFLoader().load(
   },
 );
 
+watchKeyboard();
 watchGamepads();
 
 let onTitleScreen = true;
+const releaseTitle = onAction((action) => {
+  if (action.kind === "confirm") (document.activeElement === settingsButton ? settingsButton : startButton).click();
+  else if (action.kind === "back") openSettings(settingsButton);
+  else if (action.kind === "up") startButton.focus();
+  else if (action.kind === "down") settingsButton.focus();
+  else return false;
+  return true;
+});
 window.addEventListener("keydown", (event) => {
   if (onTitleScreen && event.key === "Shift") showMode("hackclub");
-  if (!onTitleScreen || isSettingsOpen() || event.defaultPrevented || event.repeat) return;
-  if (event.key === "Backspace") {
-    event.preventDefault();
-    openSettings(settingsButton);
-    return;
-  }
-  if (event.key !== " " && event.key !== "Enter") return;
-  if (event.isTrusted && document.activeElement instanceof HTMLButtonElement) return;
-  event.preventDefault();
-  startButton.click();
 });
 window.addEventListener("keyup", (event) => {
   if (onTitleScreen && event.key === "Shift") showMode("jensen");
@@ -259,6 +259,7 @@ renderer.setAnimationLoop((time) => {
 startButton.addEventListener("click", () => {
   startMusic();
   onTitleScreen = false;
+  releaseTitle();
   ui.stop();
   renderer.setAnimationLoop(null);
   for (const node of [backdrop, canvas, overlay, doodles, document.querySelector("main")]) {

@@ -63,7 +63,7 @@ nav button {
 }
 
 nav button:hover,
-nav button:focus-visible {
+nav button:focus {
   background-image: var(--art-hover);
   outline: none;
 }

@@ -1,81 +1,97 @@
+import { emit, type Direction } from "./input";
+
 const STICK_PRESS = 0.4;
 const STICK_RELEASE = 0.2;
-const STANDARD_STICK_AXIS = 0;
-const NONSTANDARD_STICK_AXIS = 4;
+const REPEAT_DELAY_MS = 400;
+const REPEAT_INTERVAL_MS = 140;
 
 const BUTTON_BOTTOM = 0;
 const BUTTON_RIGHT = 1;
-const DPAD_LEFT = 14;
-const DPAD_RIGHT = 15;
-const HAT_AXIS = 9;
-const HAT_DIRECTIONS = 8;
-const HAT_LEFT = new Set([5, 6, 7]);
-const HAT_RIGHT = new Set([1, 2, 3]);
+const STANDARD_DPAD: [Direction, number][] = [
+  ["up", 12],
+  ["down", 13],
+  ["left", 14],
+  ["right", 15],
+];
+const STANDARD_STICK_X = 0;
+const STANDARD_STICK_Y = 1;
+const NONSTANDARD_HAT_AXIS = 9;
+const NONSTANDARD_STICK_X = 4;
 
-type Control = "left" | "right" | "confirm" | "back";
+const HAT_STEPS = 8;
+const HAT_DIRECTIONS: Direction[][] = [["up"], ["up", "right"], ["right"], ["down", "right"], ["down"], ["down", "left"], ["left"], ["up", "left"]];
 
-const KEYS: Record<Control, { key: string; code: string }> = {
-  left: { key: "ArrowLeft", code: "ArrowLeft" },
-  right: { key: "ArrowRight", code: "ArrowRight" },
-  confirm: { key: " ", code: "Space" },
-  back: { key: "Backspace", code: "Backspace" },
-};
+type Control = Direction | "confirm" | "back";
 
-const held = new Map<number, Set<Control>>();
-const stickHeld = new Map<number, "left" | "right" | null>();
-
-function press(control: Control): void {
-  const target = document.activeElement ?? document.body;
-  const { key, code } = KEYS[control];
-  const handled = !target.dispatchEvent(new KeyboardEvent("keydown", { key, code, bubbles: true, cancelable: true }));
-  target.dispatchEvent(new KeyboardEvent("keyup", { key, code, bubbles: true, cancelable: true }));
-  if (control === "confirm" && !handled && target instanceof HTMLButtonElement) target.click();
+interface PadState {
+  held: Set<Control>;
+  repeatAt: Map<Direction, number>;
 }
 
-function readHat(pad: Gamepad): "left" | "right" | null {
-  if (pad.mapping === "standard") return null;
-  const value = pad.axes[HAT_AXIS];
-  if (value === undefined || value > 1.1 || value < -1.1) return null;
-  const direction = Math.round(((value + 1) / 2) * (HAT_DIRECTIONS - 1));
-  if (HAT_LEFT.has(direction)) return "left";
-  if (HAT_RIGHT.has(direction)) return "right";
+const pads = new Map<number, PadState>();
+
+function isDirection(control: Control): control is Direction {
+  return control !== "confirm" && control !== "back";
+}
+
+function hatDirections(value: number | undefined): Direction[] {
+  if (value === undefined || value > 1.1 || value < -1.1) return [];
+  return HAT_DIRECTIONS[Math.round(((value + 1) / 2) * (HAT_STEPS - 1))] ?? [];
+}
+
+function stickDirection(value: number | undefined, wasHeld: boolean, negative: Direction, positive: Direction): Direction | null {
+  if (value === undefined) return null;
+  const threshold = wasHeld ? STICK_RELEASE : STICK_PRESS;
+  if (value <= -threshold) return negative;
+  if (value >= threshold) return positive;
   return null;
 }
 
-function readStick(pad: Gamepad): "left" | "right" | null {
-  const x = pad.axes[pad.mapping === "standard" ? STANDARD_STICK_AXIS : NONSTANDARD_STICK_AXIS] ?? 0;
-  const previous = stickHeld.get(pad.index) ?? null;
-  const threshold = previous ? STICK_RELEASE : STICK_PRESS;
-  if (x <= -threshold) return "left";
-  if (x >= threshold) return "right";
-  return null;
+function readControls(pad: Gamepad, previous: Set<Control>): Set<Control> {
+  const controls = new Set<Control>();
+  const pressed = (index: number) => pad.buttons[index]?.pressed === true;
+  const add = (control: Control | null) => {
+    if (control) controls.add(control);
+  };
+  const heldX = previous.has("left") || previous.has("right");
+  const heldY = previous.has("up") || previous.has("down");
+  if (pressed(BUTTON_RIGHT)) controls.add("confirm");
+  if (pressed(BUTTON_BOTTOM)) controls.add("back");
+  if (pad.mapping === "standard") {
+    for (const [direction, index] of STANDARD_DPAD) if (pressed(index)) controls.add(direction);
+    add(stickDirection(pad.axes[STANDARD_STICK_X], heldX, "left", "right"));
+    add(stickDirection(pad.axes[STANDARD_STICK_Y], heldY, "up", "down"));
+  } else {
+    for (const direction of hatDirections(pad.axes[NONSTANDARD_HAT_AXIS])) controls.add(direction);
+    add(stickDirection(pad.axes[NONSTANDARD_STICK_X], heldX, "left", "right"));
+  }
+  return controls;
 }
 
-function poll(): void {
+function poll(now: number): void {
   for (const pad of navigator.getGamepads()) {
     if (!pad) continue;
-    const now = new Set<Control>();
-    if (pad.buttons[BUTTON_RIGHT]?.pressed) now.add("confirm");
-    if (pad.buttons[BUTTON_BOTTOM]?.pressed) now.add("back");
-    if (pad.buttons[DPAD_LEFT]?.pressed) now.add("left");
-    if (pad.buttons[DPAD_RIGHT]?.pressed) now.add("right");
-    const hat = readHat(pad);
-    if (hat) now.add(hat);
-    const before = held.get(pad.index) ?? new Set<Control>();
-    for (const control of now) if (!before.has(control)) press(control);
-    held.set(pad.index, now);
-
-    const stick = readStick(pad);
-    if (stick && stick !== stickHeld.get(pad.index)) press(stick);
-    stickHeld.set(pad.index, stick);
+    const state = pads.get(pad.index) ?? { held: new Set<Control>(), repeatAt: new Map<Direction, number>() };
+    const controls = readControls(pad, state.held);
+    for (const control of controls) {
+      if (state.held.has(control)) continue;
+      emit({ kind: control });
+      if (isDirection(control)) state.repeatAt.set(control, now + REPEAT_DELAY_MS);
+    }
+    for (const [direction, at] of state.repeatAt) {
+      if (!controls.has(direction)) state.repeatAt.delete(direction);
+      else if (now >= at) {
+        emit({ kind: direction });
+        state.repeatAt.set(direction, now + REPEAT_INTERVAL_MS);
+      }
+    }
+    state.held = controls;
+    pads.set(pad.index, state);
   }
   requestAnimationFrame(poll);
 }
 
 export function watchGamepads(): void {
-  window.addEventListener("gamepaddisconnected", (event) => {
-    held.delete(event.gamepad.index);
-    stickHeld.delete(event.gamepad.index);
-  });
+  window.addEventListener("gamepaddisconnected", (event) => pads.delete(event.gamepad.index));
   requestAnimationFrame(poll);
 }
