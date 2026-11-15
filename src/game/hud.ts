@@ -1,8 +1,10 @@
 import rough from "roughjs";
 import type { RoughCanvas } from "roughjs/bin/canvas";
+import { imageFor } from "../images";
 import { NVIDIA_GREEN, TITLE_YELLOW, drawBadPhotoshopText } from "../pixel";
 import { STRINGS } from "../strings";
-import { FEDS_PER_STAR, MAX_STARS, type Stats } from "./types";
+import { QUARTER_LENGTH } from "./quarter";
+import { FEDS_PER_STAR, MAX_STARS, type QuarterState, type Stats } from "./types";
 
 const TITLE_FACE = 'Impact, "Arial Black", sans-serif';
 const MONEY_GREEN = "#85bb65";
@@ -11,6 +13,13 @@ const SIREN_RED = "#ff2a2a";
 const SIREN_BLUE = "#2a5bff";
 const PANIC_STARS = 4;
 const STAR_GAP = 0.15;
+const TIE_PIVOT = { x: 0.78, y: 0.16 };
+const ICONS = {
+  money: "/images/hud/money.png",
+  affairs: "/images/hud/affairs.png",
+  feds: "/images/hud/feds.png",
+  board: "/images/hud/board.png",
+};
 
 interface Rect {
   x: number;
@@ -24,6 +33,23 @@ interface Pen {
   ctx: CanvasRenderingContext2D;
   seed: number;
   meterWidth: number;
+  icon: (url: string) => HTMLImageElement | null;
+  quarter: QuarterState;
+  elapsed: number;
+  placed: HudIcon[];
+}
+
+export interface HudIcon {
+  image: HTMLImageElement;
+  matrix: DOMMatrix;
+  size: number;
+}
+
+export interface HudState {
+  stats: Stats;
+  turn: number;
+  quarter: QuarterState;
+  elapsed: number;
 }
 
 type Chip = (pen: Pen, s: number, stats: Stats, measureOnly: boolean) => number;
@@ -41,7 +67,15 @@ function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number
   return drawBadPhotoshopText(ctx, text, x, y, size, font, fill, "#000", null) - x;
 }
 
-function meter(pen: Pen, x: number, s: number, value: number, name: string, fill: (width: number, height: number) => void): void {
+function meter(
+  pen: Pen,
+  x: number,
+  s: number,
+  value: number,
+  text: string,
+  fill: (width: number, height: number) => void,
+  rightText?: string,
+): void {
   const { rc, ctx, seed } = pen;
   const width = s * pen.meterWidth;
   const height = s * 0.62;
@@ -54,43 +88,46 @@ function meter(pen: Pen, x: number, s: number, value: number, name: string, fill
     ctx.restore();
   }
   rc.rectangle(x, top, width, height, { seed, roughness: 2, bowing: 2, stroke: "#fff", strokeWidth: 2.5 });
-  const size = height * 0.7;
-  label(ctx, `${name} ${value}`, x + s * 0.18, top + height * 0.78, size, "#fff", false);
+  const edge = s * 0.18;
+  const room = width - edge * 2;
+  const split = rightText ? s * 0.25 : 0;
+  let size = height * 0.7;
+  const natural = label(ctx, text, 0, 0, size, "#fff", true) + (rightText ? label(ctx, rightText, 0, 0, size, "#fff", true) + split : 0);
+  if (natural > room) size *= room / natural;
+  const baseline = top + height * 0.78;
+  label(ctx, text, x + edge, baseline, size, "#fff", false);
+  if (rightText) {
+    const rightWidth = label(ctx, rightText, 0, 0, size, "#fff", true);
+    label(ctx, rightText, x + width - edge - rightWidth, baseline, size, "#fff", false);
+  }
 }
 
-const money: Chip = ({ rc, ctx, seed }, s, stats, measureOnly) => {
+function drawIcon(pen: Pen, url: string, s: number): void {
+  const image = pen.icon(url);
+  if (!image) return;
+  pen.placed.push({ image, matrix: pen.ctx.getTransform(), size: s });
+}
+
+const money: Chip = (pen, s, stats, measureOnly) => {
+  const { ctx } = pen;
   const text = STRINGS.amounts.money(stats.money);
   const size = s * 0.62;
   const textWidth = label(ctx, text, 0, 0, size, MONEY_GREEN, true);
   if (measureOnly) return s * (1 + GAP) + textWidth;
 
-  rc.ellipse(s * 0.5, s * 0.62, s * 0.86, s * 0.72, { seed, fill: "#b8893a", fillStyle: "solid", stroke: "#fff", strokeWidth: 2, roughness: 1.6 });
-  rc.polygon(
-    [
-      [s * 0.32, s * 0.08],
-      [s * 0.68, s * 0.08],
-      [s * 0.58, s * 0.3],
-      [s * 0.42, s * 0.3],
-    ],
-    { seed, fill: "#b8893a", fillStyle: "solid", stroke: "#fff", strokeWidth: 2, roughness: 1.6 },
-  );
-  rc.line(s * 0.36, s * 0.3, s * 0.64, s * 0.3, { seed, stroke: "#5a3a10", strokeWidth: 3 });
-  label(ctx, "$", s * 0.36, s * 0.84, s * 0.48, MONEY_GREEN, false);
+  drawIcon(pen, ICONS.money, s);
   label(ctx, text, s * (1 + GAP), s * 0.78, size, MONEY_GREEN, false);
   return s * (1 + GAP) + textWidth;
 };
 
-const affairs: Chip = ({ rc, ctx, seed }, s, stats, measureOnly) => {
+const affairs: Chip = (pen, s, stats, measureOnly) => {
+  const { ctx } = pen;
   const text = String(stats.affairs);
   const size = s * 0.62;
   const width = s * (1 + GAP) + label(ctx, text, 0, 0, size, LIPSTICK, true);
   if (measureOnly) return width;
 
-  const lips = { seed, fill: LIPSTICK, fillStyle: "solid", stroke: LIPSTICK, strokeWidth: 1.5, roughness: 1.4 };
-  rc.path(`M ${s * 0.08} ${s * 0.5} Q ${s * 0.3} ${s * 0.18} ${s * 0.5} ${s * 0.4} Q ${s * 0.7} ${s * 0.18} ${s * 0.92} ${s * 0.5} Z`, lips);
-  rc.path(`M ${s * 0.08} ${s * 0.54} Q ${s * 0.5} ${s * 0.98} ${s * 0.92} ${s * 0.54} Z`, lips);
-  rc.line(s * 0.14, s * 0.52, s * 0.86, s * 0.52, { seed, stroke: "#000", strokeWidth: 1.5, roughness: 2 });
-
+  drawIcon(pen, ICONS.affairs, s);
   label(ctx, text, s * (1 + GAP), s * 0.78, size, LIPSTICK, false);
   return width;
 };
@@ -113,27 +150,7 @@ const feds: Chip = (pen, s, stats, measureOnly) => {
   if (measureOnly) return width;
   const { rc, ctx, seed } = pen;
 
-  const lens = { seed, fill: "#111", fillStyle: "solid", stroke: "#fff", strokeWidth: 2, roughness: 1.5 };
-  rc.polygon(
-    [
-      [s * 0.04, s * 0.18],
-      [s * 0.46, s * 0.18],
-      [s * 0.4, s * 0.48],
-      [s * 0.1, s * 0.48],
-    ],
-    lens,
-  );
-  rc.polygon(
-    [
-      [s * 0.54, s * 0.18],
-      [s * 0.96, s * 0.18],
-      [s * 0.9, s * 0.48],
-      [s * 0.6, s * 0.48],
-    ],
-    lens,
-  );
-  rc.line(s * 0.46, s * 0.22, s * 0.54, s * 0.22, { seed, stroke: "#fff", strokeWidth: 2 });
-  label(ctx, "FBI", s * 0.12, s * 0.94, s * 0.42, TITLE_YELLOW, false);
+  drawIcon(pen, ICONS.feds, s);
 
   const size = (s * pen.meterWidth) / (MAX_STARS + (MAX_STARS - 1) * STAR_GAP);
   const left = s * (1 + GAP);
@@ -166,31 +183,13 @@ const board: Chip = (pen, s, stats, measureOnly) => {
   const color = confidence > 50 ? NVIDIA_GREEN : confidence > 25 ? "#f1c40f" : SIREN_RED;
 
   ctx.save();
-  ctx.translate(s * 0.5, s * 0.1);
-  ctx.rotate(((100 - confidence) / 100) * 0.9);
-  const tie = { seed, fill: "#338eda", fillStyle: "solid", stroke: "#fff", strokeWidth: 2, roughness: 1.5 };
-  rc.polygon(
-    [
-      [-s * 0.14, 0],
-      [s * 0.14, 0],
-      [s * 0.08, s * 0.16],
-      [-s * 0.08, s * 0.16],
-    ],
-    tie,
-  );
-  rc.polygon(
-    [
-      [-s * 0.08, s * 0.16],
-      [s * 0.08, s * 0.16],
-      [s * 0.2, s * 0.7],
-      [0, s * 0.86],
-      [-s * 0.2, s * 0.7],
-    ],
-    { ...tie, fill: "#338eda", fillStyle: "zigzag", hachureGap: 3 },
-  );
+  ctx.translate(s * TIE_PIVOT.x, s * TIE_PIVOT.y);
+  ctx.rotate(((100 - confidence) / 100) * 0.6);
+  ctx.translate(-s * TIE_PIVOT.x, -s * TIE_PIVOT.y);
+  drawIcon(pen, ICONS.board, s);
   ctx.restore();
 
-  meter(pen, s * (1 + GAP), s, confidence, STRINGS.hud.stats.board.toUpperCase(), (width, height) => {
+  meter(pen, s * (1 + GAP), s, confidence, `${STRINGS.hud.stats.board.toUpperCase()} ${confidence}`, (width, height) => {
     rc.rectangle(0, 0, width, height, {
       seed,
       fill: color,
@@ -203,7 +202,60 @@ const board: Chip = (pen, s, stats, measureOnly) => {
   return width;
 };
 
-const CHIPS: Chip[] = [money, affairs, feds, board];
+function drawChartIcon(pen: Pen, s: number): void {
+  const { rc, seed } = pen;
+  const bar = { seed, roughness: 1.4, stroke: "#fff", strokeWidth: 2, fill: NVIDIA_GREEN, fillStyle: "solid" };
+  rc.rectangle(s * 0.12, s * 0.55, s * 0.2, s * 0.35, bar);
+  rc.rectangle(s * 0.4, s * 0.4, s * 0.2, s * 0.5, bar);
+  rc.rectangle(s * 0.68, s * 0.18, s * 0.2, s * 0.72, bar);
+}
+
+const earnings: Chip = (pen, s, _stats, measureOnly) => {
+  const { quarter, elapsed, ctx, seed, rc } = pen;
+  const tag = quarter.boost > 0 ? STRINGS.hud.debt(quarter.boost) : "";
+  const tagSize = s * 0.5;
+  const tagWidth = tag ? label(ctx, tag, 0, 0, tagSize, SIREN_RED, true) + s * 0.2 : 0;
+  const width = s * (1 + GAP) + s * pen.meterWidth + tagWidth;
+  if (measureOnly) return width;
+
+  drawChartIcon(pen, s);
+
+  const progress = Math.min(1, quarter.revenue / quarter.target);
+  const pace = elapsed / QUARTER_LENGTH;
+  const color = progress >= pace ? NVIDIA_GREEN : progress >= pace * 0.6 ? "#f1c40f" : SIREN_RED;
+  const left = s * (1 + GAP);
+  meter(
+    pen,
+    left,
+    s,
+    progress * 100,
+    STRINGS.hud.quarterLabel(quarter.number),
+    (fillWidth, height) => {
+      rc.rectangle(0, 0, fillWidth, height, {
+        seed,
+        fill: color,
+        fillStyle: "zigzag",
+        hachureGap: 4,
+        fillWeight: 3,
+        stroke: "none",
+      });
+    },
+    STRINGS.hud.progressLabel(quarter.revenue, quarter.target),
+  );
+
+  const meterWidth = s * pen.meterWidth;
+  const gap = s * 0.05;
+  const notch = (meterWidth - gap * (QUARTER_LENGTH - 1)) / QUARTER_LENGTH;
+  for (let index = 0; index < QUARTER_LENGTH; index++) {
+    ctx.fillStyle = index < elapsed ? "#fff" : "#555";
+    ctx.fillRect(left + index * (notch + gap), s * 0.86, notch, s * 0.11);
+  }
+
+  if (tag) label(ctx, tag, left + meterWidth + s * 0.1, s * 0.74, tagSize, SIREN_RED, false);
+  return width;
+};
+
+const CHIPS: Chip[] = [money, affairs, feds, earnings, board];
 const CHIP_GAP = 0.55;
 const MIN_ROW_SCALE = 0.6;
 const MARGIN = 16;
@@ -235,15 +287,20 @@ function drawRow(ctx: CanvasRenderingContext2D, pens: Pen[], stats: Stats, rect:
   ctx.restore();
 }
 
-export function paintHud(ctx: CanvasRenderingContext2D, rect: Rect, stats: Stats | null, turn: number): void {
+export function paintHud(ctx: CanvasRenderingContext2D, rect: Rect, state: HudState | null, repaint: () => void): HudIcon[] {
   ctx.fillStyle = "#000";
   ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
   ctx.fillStyle = NVIDIA_GREEN;
   ctx.fillRect(rect.x, rect.y + rect.height - 3, rect.width, 3);
-  if (!stats) return;
+  const placed: HudIcon[] = [];
+  if (!state) return placed;
 
+  const { stats, turn, quarter, elapsed } = state;
   const rc = rough.canvas(ctx.canvas);
-  const pens = CHIPS.map((_, index): Pen => ({ rc, ctx, seed: turn * 5 + index + 1, meterWidth: METER_WIDTH }));
+  const icon = (url: string) => imageFor(url, repaint);
+  const pens = CHIPS.map(
+    (_, index): Pen => ({ rc, ctx, seed: turn * 5 + index + 1, meterWidth: METER_WIDTH, icon, quarter, elapsed, placed }),
+  );
   const turnLabel = `${STRINGS.hud.turn} ${turn}`;
 
   const paintTurn = (rowY: number, rowHeight: number): number => {
@@ -257,18 +314,19 @@ export function paintHud(ctx: CanvasRenderingContext2D, rect: Rect, stats: Stats
     return ctx.measureText(turnLabel).width + MARGIN;
   };
 
-  const single: Row = { chips: [0, 1, 2, 3], y: rect.y, height: rect.height, reserved: measureTurn(rect.height) };
+  const single: Row = { chips: [0, 1, 2, 3, 4], y: rect.y, height: rect.height, reserved: measureTurn(rect.height) };
   if (rowFit(ctx, pens, stats, rect, single).scale >= MIN_ROW_SCALE) {
     paintTurn(single.y, single.height);
     drawRow(ctx, pens, stats, rect, single);
-    return;
+    return placed;
   }
 
   for (const pen of pens) pen.meterWidth = NARROW_METER_WIDTH;
   const topHeight = (rect.height - 3) * 0.4;
   const top: Row = { chips: [0, 1], y: rect.y, height: topHeight, reserved: measureTurn(topHeight) };
-  const bottom: Row = { chips: [2, 3], y: rect.y + topHeight, height: rect.height - 3 - topHeight, reserved: 0 };
+  const bottom: Row = { chips: [2, 3, 4], y: rect.y + topHeight, height: rect.height - 3 - topHeight, reserved: 0 };
   paintTurn(top.y, top.height);
   drawRow(ctx, pens, stats, rect, top);
   drawRow(ctx, pens, stats, rect, bottom);
+  return placed;
 }

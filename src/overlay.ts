@@ -15,9 +15,6 @@ import { STRINGS } from "./strings";
 const HC_RED = "#ec3750";
 const HC_ORANGE = "#ff8c37";
 const HC_YELLOW = "#f1c40f";
-const HC_GREEN = "#33d6a6";
-const HC_CYAN = "#5bc0de";
-const HC_BLUE = "#338eda";
 const HC_PURPLE = "#a633d6";
 const DOODLE_RESOLUTION_SCALE = 0.33;
 const BOIL_VARIANTS = 3;
@@ -99,54 +96,6 @@ function drawEyeLogo(rc: RoughCanvas, ctx: CanvasRenderingContext2D, rng: Rng, s
   drawWobblyText(ctx, rng, STRINGS.title.logo.nvidia, x + size * 0.02, y + size * 1.1, size * 0.34, "#fff", NVIDIA_GREEN);
 }
 
-function drawGpu(rc: RoughCanvas, seed: number, x: number, y: number, width: number): void {
-  const height = width * 0.38;
-  const base = { seed, roughness: 3.2, bowing: 6, strokeWidth: 3, stroke: "#000" };
-
-  rc.rectangle(x - width * 0.06, y - height * 0.05, width * 0.06, height * 1.15, {
-    ...base,
-    fill: "#9a9a9a",
-    fillStyle: "solid",
-  });
-  rc.rectangle(x, y, width, height, {
-    ...base,
-    fill: "#1a1a1a",
-    fillStyle: "zigzag",
-    hachureGap: 6,
-    fillWeight: 4,
-  });
-  rc.line(x + width * 0.05, y + height * 0.12, x + width * 0.95, y + height * 0.12, {
-    ...base,
-    stroke: NVIDIA_GREEN,
-    strokeWidth: 5,
-  });
-
-  for (const fx of [0.3, 0.7]) {
-    const cx = x + width * fx;
-    const cy = y + height * 0.55;
-    const r = height * 0.36;
-    rc.circle(cx, cy, r * 2, { ...base, fill: "#333", fillStyle: "solid", stroke: "#888" });
-    for (let blade = 0; blade < 5; blade++) {
-      const angle = (blade / 5) * Math.PI * 2;
-      rc.line(cx, cy, cx + Math.cos(angle) * r * 0.9, cy + Math.sin(angle) * r * 0.9, {
-        ...base,
-        stroke: "#888",
-        strokeWidth: 2,
-      });
-    }
-    rc.circle(cx, cy, r * 0.5, { ...base, fill: NVIDIA_GREEN, fillStyle: "solid" });
-  }
-
-  for (let pin = 0; pin < 9; pin++) {
-    rc.rectangle(x + width * (0.22 + pin * 0.055), y + height, width * 0.035, height * 0.12, {
-      ...base,
-      strokeWidth: 1,
-      fill: "#e3b100",
-      fillStyle: "solid",
-    });
-  }
-}
-
 function drawHackClubLogo(rc: RoughCanvas, ctx: CanvasRenderingContext2D, rng: Rng, seed: number, x: number, y: number, size: number): void {
   const r = size * 0.22;
   const s = size * 0.8;
@@ -173,37 +122,6 @@ function drawHackClubLogo(rc: RoughCanvas, ctx: CanvasRenderingContext2D, rng: R
   drawWobblyText(ctx, rng, STRINGS.title.logo.hackclub, x - size * 0.05, y + size * 1.1, size * 0.3, "#fff", HC_RED);
 }
 
-function drawLaptop(rc: RoughCanvas, seed: number, x: number, y: number, width: number): void {
-  const screenHeight = width * 0.55;
-  const base = { seed, roughness: 3.2, bowing: 6, strokeWidth: 3, stroke: "#000" };
-
-  rc.rectangle(x + width * 0.08, y, width * 0.84, screenHeight, {
-    ...base,
-    fill: "#17171d",
-    fillStyle: "solid",
-  });
-  const codeColors = [HC_GREEN, HC_CYAN, HC_YELLOW, HC_PURPLE, HC_GREEN];
-  codeColors.forEach((color, line) => {
-    const lineY = y + screenHeight * (0.18 + line * 0.15);
-    const indent = line % 2 === 0 ? 0.15 : 0.22;
-    const length = 0.35 + ((line * 37) % 30) / 100;
-    rc.line(x + width * indent, lineY, x + width * (indent + length), lineY, { ...base, stroke: color, strokeWidth: 4 });
-  });
-
-  const deck = `M ${x + width * 0.08} ${y + screenHeight} L ${x + width * 0.92} ${y + screenHeight} L ${x + width} ${y + screenHeight + width * 0.12} L ${x} ${y + screenHeight + width * 0.12} Z`;
-  rc.path(deck, { ...base, fill: "#8492a6", fillStyle: "solid" });
-
-  const stickers = [HC_RED, HC_ORANGE, HC_BLUE];
-  stickers.forEach((color, index) => {
-    rc.circle(x + width * (0.2 + index * 0.08), y + screenHeight + width * 0.06, width * 0.06, {
-      ...base,
-      strokeWidth: 1.5,
-      fill: color,
-      fillStyle: "solid",
-    });
-  });
-}
-
 export type Mode = "jensen" | "hackclub";
 
 interface Theme {
@@ -213,8 +131,6 @@ interface Theme {
   underline: string;
   button: ButtonColors;
   drawLogo: typeof drawEyeLogo;
-  drawProp: typeof drawGpu;
-  propAspect: number;
 }
 
 const THEMES: Record<Mode, Theme> = {
@@ -225,8 +141,6 @@ const THEMES: Record<Mode, Theme> = {
     underline: NVIDIA_GREEN,
     button: { fill: NVIDIA_GREEN, ink: "#000", outline: "#fff" },
     drawLogo: drawEyeLogo,
-    drawProp: drawGpu,
-    propAspect: 0.5,
   },
   hackclub: {
     title: STRINGS.title.hackclub,
@@ -235,8 +149,6 @@ const THEMES: Record<Mode, Theme> = {
     underline: HC_YELLOW,
     button: { fill: HC_RED, ink: "#fff", outline: "#000" },
     drawLogo: drawHackClubLogo,
-    drawProp: drawLaptop,
-    propAspect: 0.8,
   },
 };
 
@@ -297,13 +209,6 @@ function drawDoodles(canvas: HTMLCanvasElement, theme: Theme, variant: number): 
 
   const logoSize = Math.min(Math.max(width * 0.09, 70), 130);
   theme.drawLogo(rc, ctx, rng, seed, width - logoSize - width * 0.04, height * 0.05, logoSize);
-
-  const propWidth = Math.min(Math.max(width * 0.18, 130), 280);
-  ctx.save();
-  ctx.translate(width - propWidth - width * 0.04, height - propWidth * theme.propAspect - height * 0.06);
-  ctx.rotate(0.08);
-  theme.drawProp(rc, seed, 0, 0, propWidth);
-  ctx.restore();
 }
 
 function paintButton(button: HTMLButtonElement, colors: ButtonColors): void {

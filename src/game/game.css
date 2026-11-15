@@ -3,7 +3,7 @@
   inset: 0;
   display: grid;
   grid-template-rows: 5.2rem 1fr auto;
-  background: #0e1f08;
+  background: var(--backdrop);
   font-family: Arial, sans-serif;
 }
 

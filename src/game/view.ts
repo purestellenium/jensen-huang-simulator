@@ -1,6 +1,7 @@
 import rough from "roughjs";
 import {
   NVIDIA_GREEN,
+  RESOLUTION_SCALE,
   SPRITE_COLOR_LEVELS,
   SPRITE_RESOLUTION_SCALE,
   crush,
@@ -8,14 +9,16 @@ import {
   sizeCanvas,
   wrapText,
 } from "../pixel";
+import { imageFor } from "../images";
 import { outlineButtonArt } from "../sketch";
-import { paintHud } from "./hud";
+import { paintHud, type HudIcon } from "./hud";
 import { Screensaver } from "./screensaver";
 import { STRINGS } from "../strings";
 import { APPS, APP_ORDER } from "./apps";
 import { CONTACTS, type Contact } from "./content";
 import { choiceAvailable, choicePreview, type PreviewPart } from "./engine";
-import { FEDS_PER_STAR, type AppId, type Choice, type GameState, type Stats, type Tone } from "./types";
+import { QUARTER_LENGTH } from "./quarter";
+import { FEDS_PER_STAR, type AppId, type Choice, type GameState, type QuarterState, type Stats, type Tone } from "./types";
 
 const TYPE_INTERVAL_MS = 22;
 const TITLE_FACE = 'Impact, "Arial Black", sans-serif';
@@ -50,23 +53,12 @@ function formatStat(key: keyof Stats, value: number): string {
   return String(value);
 }
 
-const images = new Map<string, HTMLImageElement>();
-
-function imageFor(url: string, onLoad: () => void): HTMLImageElement | null {
-  let image = images.get(url);
-  if (!image) {
-    image = new Image();
-    image.addEventListener("load", onLoad);
-    image.src = url;
-    images.set(url, image);
-  }
-  return image.complete && image.naturalWidth > 0 ? image : null;
-}
-
 export class GameView {
   private readonly art: HTMLCanvasElement;
   private readonly sprites: HTMLCanvasElement;
   private readonly hud: HTMLElement;
+  private readonly hudIcons: HTMLCanvasElement;
+  private readonly hudText: HTMLElement;
   private readonly card: HTMLElement;
   private readonly portrait: HTMLElement;
   private readonly message: HTMLElement;
@@ -79,6 +71,8 @@ export class GameView {
   private readonly slots = new Map<AppId, HTMLElement>();
 
   private stats: Stats | null = null;
+  private quarter: QuarterState | null = null;
+  private elapsed = 0;
   private turn = 1;
   private activeApp: AppId | null = null;
   private contact: Contact | null = null;
@@ -98,6 +92,9 @@ export class GameView {
     this.sprites.setAttribute("aria-hidden", "true");
     this.hud = el("div", "hud", root);
     this.hud.setAttribute("role", "status");
+    this.hudIcons = el("canvas", "art", this.hud);
+    this.hudIcons.setAttribute("aria-hidden", "true");
+    this.hudText = el("span", "sr", this.hud);
 
     const table = el("div", "table", root);
     this.card = el("div", "card", table);
@@ -140,7 +137,16 @@ export class GameView {
   updateStats(state: GameState): void {
     this.turn = state.turn;
     this.stats = { ...state.stats };
-    this.hud.textContent = `${STRINGS.hud.summaryTurn(state.turn)} ` + STAT_LABELS.map(([key, label]) => `${label} ${formatStat(key, state.stats[key])}`).join(", ");
+    this.quarter = { ...state.quarter };
+    this.elapsed = state.turn - state.quarter.startTurn;
+    const summary = STAT_LABELS.map(([key, label]) => `${label} ${formatStat(key, state.stats[key])}`).join(", ");
+    const quarterSummary = STRINGS.hud.summaryQuarter(
+      state.quarter.number,
+      state.quarter.revenue,
+      state.quarter.target,
+      Math.max(0, QUARTER_LENGTH - this.elapsed),
+    );
+    this.hudText.textContent = `${STRINGS.hud.summaryTurn(state.turn)} ${summary}. ${quarterSummary}`;
     this.paintArt();
   }
 
@@ -270,11 +276,31 @@ export class GameView {
       return { x: rect.left - bounds.left, y: rect.top - bounds.top, width: rect.width, height: rect.height };
     };
 
-    paintHud(ctx, at(this.hud), this.stats, this.turn);
+    const hudState = this.stats && this.quarter ? { stats: this.stats, turn: this.turn, quarter: this.quarter, elapsed: this.elapsed } : null;
+    const icons = paintHud(ctx, at(this.hud), hudState, () => this.paintArt());
+    this.paintHudIcons(at(this.hud), icons);
     this.paintCard(ctx, at(this.card), this.contact ? at(this.portrait) : null);
     this.paintDock(ctx, at(this.dock));
     crush(ctx);
     this.paintPortrait(bounds, this.contact ? at(this.portrait) : null);
+  }
+
+  private paintHudIcons(rect: Rect, icons: HudIcon[]): void {
+    const ctx = sizeCanvas(this.hudIcons, rect.width, rect.height, 1);
+    const toCss = 1 / RESOLUTION_SCALE;
+    ctx.imageSmoothingQuality = "high";
+    for (const { image, matrix, size } of icons) {
+      ctx.setTransform(
+        matrix.a * toCss,
+        matrix.b * toCss,
+        matrix.c * toCss,
+        matrix.d * toCss,
+        matrix.e * toCss - rect.x,
+        matrix.f * toCss - rect.y,
+      );
+      ctx.drawImage(image, 0, 0, size, size);
+    }
+    crush(ctx);
   }
 
   private paintCard(ctx: CanvasRenderingContext2D, card: Rect, portrait: Rect | null): void {
@@ -451,7 +477,7 @@ export class GameView {
     ctx.rotate(-0.04);
     let cursor = -layout.total / 2;
     parts.forEach((part, index) => {
-      drawBadPhotoshopText(ctx, part.text, cursor, size * 0.35, size, `${size}px ${TITLE_FACE}`, part.gain ? YES_COLOR : NO_COLOR, "#000", null);
+      drawBadPhotoshopText(ctx, part.text, cursor, size * 0.35, size, `${size}px ${TITLE_FACE}`, YES_COLOR, "#000", null);
       cursor += layout.widths[index]! + size * gap;
     });
     ctx.setTransform(1, 0, 0, 1, 0, 0);

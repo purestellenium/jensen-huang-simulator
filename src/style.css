@@ -1,9 +1,13 @@
+:root {
+  --backdrop: #121c0e;
+}
+
 html,
 body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: #0e1f08;
+  background: var(--backdrop);
 }
 
 #backdrop,

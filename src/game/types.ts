@@ -5,16 +5,31 @@ export type Stats = Record<StatKey, number>;
 export const MAX_STARS = 5;
 export const FEDS_PER_STAR = 20;
 
-export type NumericKey = StatKey | "turn";
+export type NumericKey = StatKey | "turn" | "stars" | "quarterTurn";
 
 export type Condition =
   | { stat: NumericKey; min?: number; max?: number }
+  | { counter: string; min?: number; max?: number }
   | { flag: string };
+
+export interface ScheduledScenario {
+  id: string;
+  after: number | [number, number];
+}
+
+export interface ExpiringFlag {
+  flag: string;
+  turns: number;
+}
 
 export interface Effect {
   stats?: Partial<Stats>;
+  counters?: Record<string, number>;
   setFlags?: string[];
   clearFlags?: string[];
+  expiringFlags?: ExpiringFlag[];
+  schedule?: ScheduledScenario[];
+  targetBoost?: number;
 }
 
 export interface Outcome {
@@ -38,23 +53,45 @@ export type Choice = {
 
 export interface Scenario {
   id: string;
-  app: AppId;
+  app?: AppId;
   contact?: string;
   text: string;
-  weight?: number;
+  weight?: number | ((state: GameState) => number);
   once?: boolean;
+  scheduledOnly?: boolean;
   requires?: Condition[];
   forbids?: Condition[];
+  forced?: Condition[];
   choices: Choice[];
 }
 
 export type LossKind = "feds" | "board" | "scandal";
 
+export interface QuarterState {
+  number: number;
+  revenue: number;
+  target: number;
+  startTurn: number;
+  boost: number;
+  missStreak: number;
+}
+
+export type QuarterResult = "hit" | "miss";
+
+export interface ScheduledEntry {
+  id: string;
+  due: number;
+}
+
 export interface GameState {
   turn: number;
   stats: Stats;
   flags: Set<string>;
+  flagExpiry: Map<string, number>;
+  counters: Record<string, number>;
   seen: Map<string, number>;
-  pendingNext: string | null;
+  scheduled: ScheduledEntry[];
+  quarter: QuarterState;
+  quarterResult: QuarterResult | null;
   loss: LossKind | null;
 }
