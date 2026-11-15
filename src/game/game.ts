@@ -79,6 +79,8 @@ export async function startGame(root: HTMLElement): Promise<void> {
     await view.showSummary(summaryOf(state, state.loss));
     const successor = nextIdentity();
     view.clearText();
+    await view.narrate(STRINGS.endings.bounceBack);
+    view.clearText();
     await view.transform(successor);
     await view.narrate(STRINGS.endings.newCeo(successor.name));
     await view.narrate(STRINGS.endings.newCeoStory);

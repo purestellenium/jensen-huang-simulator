@@ -11,7 +11,7 @@ const ART = {
   frame: "/images/anim/frame.svg",
   printer: "/images/anim/printer.svg",
   lips: "/images/hud/affairs.png",
-  coin: "/images/anim/coin.svg",
+  coin: "/images/anim/coin.png",
   x1: "/images/anim/x1.svg",
   x2: "/images/anim/x2.svg",
   sirenRed: "/images/anim/siren-red.svg",

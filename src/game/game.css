@@ -277,7 +277,7 @@
 .anim-flag {
   position: absolute;
   left: calc(50vw - 89vh);
-  bottom: -62vh;
+  bottom: -82vh;
   height: 190vh;
   width: 95vh;
   transform-origin: 94% 100%;

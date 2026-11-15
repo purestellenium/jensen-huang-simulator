@@ -85,6 +85,7 @@ export const STRINGS = {
       headline: "NVIDIA BOARD OUSTS CEO OVER AFFAIR",
       story: "\"We tolerate a lot of things,\" said one director. \"A leaked group chat is not one of them.\"",
     },
+    bounceBack: "How will Jensen Huang bounce back from this?",
     newCeo: (name: string) => `NVIDIA NAMES NEW CEO ${name.toUpperCase()}`,
     newCeoStory: "\"Great energy,\" said one director. \"Honestly, he reminds me of someone, but I can't place who.\"",
     newsflash: "NEWSFLASH",
