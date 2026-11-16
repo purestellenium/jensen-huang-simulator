@@ -1,7 +1,12 @@
 import type { GameState, QuarterState } from "./types";
 
 export const QUARTER_LENGTH = 6;
-export const PASSIVE_INCOME = 5;
+export const BASE_PASSIVE_INCOME = 5;
+
+// Passive income grows every two quarters so safe play keeps pace with rising targets.
+export function passiveIncome(quarter: number): number {
+  return BASE_PASSIVE_INCOME + Math.floor((quarter - 1) / 2);
+}
 export const HIT_BOARD_BONUS = 10;
 export const EARNINGS_HIT_ID = "earnings-hit";
 export const EARNINGS_MISS_ID = "earnings-miss";

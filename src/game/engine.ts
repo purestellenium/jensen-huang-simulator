@@ -3,7 +3,7 @@ import {
   EARNINGS_FIRED_ID,
   EARNINGS_HIT_ID,
   EARNINGS_MISS_ID,
-  PASSIVE_INCOME,
+  passiveIncome,
   QUARTER_LENGTH,
   boostTarget,
   closeQuarter,
@@ -202,8 +202,8 @@ function expireFlags(state: GameState): void {
 }
 
 function endTurn(state: GameState, rng: Rng): void {
-  state.stats.money = round1(state.stats.money + PASSIVE_INCOME);
-  state.quarter.revenue = round1(state.quarter.revenue + PASSIVE_INCOME);
+  state.stats.money = round1(state.stats.money + passiveIncome(state.quarter.number));
+  state.quarter.revenue = round1(state.quarter.revenue + passiveIncome(state.quarter.number));
   state.turn += 1;
   expireFlags(state);
   if (state.turn - state.quarter.startTurn >= QUARTER_LENGTH) closeQuarter(state, rng);
