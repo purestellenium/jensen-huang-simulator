@@ -130,9 +130,9 @@ async function cashAway(layer: HTMLElement): Promise<void> {
         { transform: "translate(0, 0) rotate(0deg) scaleY(1)", opacity: 0 },
         { transform: `translate(${dx * 0.3}vw, -20vh) rotate(${flap}deg) scaleY(0.4)`, opacity: 1, offset: 0.3 },
         { transform: `translate(${dx * 0.6}vw, -45vh) rotate(${-flap}deg) scaleY(1)`, offset: 0.6 },
-        { transform: `translate(${dx}vw, -80vh) rotate(${flap}deg) scaleY(0.4)`, opacity: 1 },
+        { transform: `translate(${dx}vw, -80vh) rotate(${flap}deg) scaleY(0.4)`, opacity: 0 },
       ],
-      { duration: between(1000, 1300), delay: between(0, 250), easing: "ease-in", fill: "backwards" },
+      { duration: between(1000, 1300), delay: between(0, 250), easing: "ease-in", fill: "both" },
     ).finished;
   });
   await Promise.all(flights);

@@ -149,7 +149,7 @@ const architecture: Scenario = {
       anim: "china",
       hint: STRINGS.hints.secrets,
       effects: {
-        stats: { money: 25, feds: 20 },
+        stats: { money: 25, feds: 40 },
         counters: { evidence: 2 },
         schedule: [{ id: "fbi-money", after: [2, 3] }],
       },

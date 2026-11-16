@@ -14,7 +14,8 @@ export const EARNINGS_FIRED_ID = "earnings-fired";
 
 const BASE_TARGETS = [28, 34, 40, 45];
 const LATE_STEP = 5;
-const FIRE_CHANCE_BY_STREAK = [0, 0.18, 0.6, 1];
+// Matches the tutorial and the "second quarter in a row" scene: one miss is safe, two in a row is fatal.
+const FIRE_CHANCE_BY_STREAK = [0, 0, 1];
 
 export function baseTarget(number: number): number {
   if (number <= BASE_TARGETS.length) return BASE_TARGETS[number - 1]!;

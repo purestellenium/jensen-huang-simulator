@@ -125,7 +125,7 @@ export const STRINGS = {
   identities: {
     original: "Jensen Huang",
     blonde: "Donald Huang",
-    aliases: ["Hensen Juang", "Bensen Buang", "Pete Huangsen", "Cisco Huallace", "Sam Huangman", "Jenin Huangnin"],
+    aliases: ["Hensen Juang", "Bensen Buang", "Pete Huangseth", "Cisco Huallace", "Sam Huangman", "Jenin Huangnin"],
   },
 
   anims: {
